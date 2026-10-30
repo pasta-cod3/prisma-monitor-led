@@ -43,10 +43,15 @@ def validate(model, state):
     return out
 
 
+def default_layout_x(existing):
+    xs = [p.get("x", 0) for p in existing.values()]
+    return (max(xs) + 1) if xs else 0
+
+
 class Store:
 
     def __init__(self):
-        self.monitors, self.legacy = {}, None
+        self.monitors, self.layout, self.legacy = {}, {}, None
         try:
             with open(STATE_FILE) as f:
                 data = json.load(f)
@@ -59,6 +64,12 @@ class Store:
                     try:
                         self.monitors[key] = {"model": model["id"], "state": validate(model, entry.get("state", {}))}
                     except (ValueError, TypeError):
+                        pass
+            for key, pos in data.get("layout", {}).items():
+                if key in self.monitors and isinstance(pos, dict):
+                    try:
+                        self.layout[key] = {"x": float(pos.get("x", 0)), "y": float(pos.get("y", 0))}
+                    except (TypeError, ValueError):
                         pass
         else:
             self.legacy = data
@@ -73,6 +84,7 @@ class Store:
                     pass
                 self.legacy = None
             self.monitors[key] = {"model": model["id"], "state": state}
+            self.layout[key] = {"x": default_layout_x(self.layout), "y": 0.0}
             self.save()
         return self.monitors[key]["state"]
 
@@ -80,11 +92,29 @@ class Store:
         self.monitors[key]["state"] = state
         self.save()
 
+    def set_layout(self, layout):
+        clean = {}
+        for key, pos in layout.items():
+            if key not in self.monitors:
+                raise ValueError("monitor sconosciuto: %s" % key)
+            if not isinstance(pos, dict):
+                raise ValueError("posizione non valida per %s" % key)
+            try:
+                x, y = float(pos.get("x", 0)), float(pos.get("y", 0))
+            except (TypeError, ValueError):
+                raise ValueError("posizione non valida per %s" % key)
+            clean[key] = {"x": x, "y": y}
+        for key in self.monitors:
+            if key not in clean:
+                clean[key] = self.layout.get(key, {"x": default_layout_x(clean), "y": 0.0})
+        self.layout = clean
+        self.save()
+
     def save(self):
         os.makedirs(STATE_DIR, exist_ok=True)
         tmp = STATE_FILE + ".tmp"
         with open(tmp, "w") as f:
-            json.dump({"version": 2, "monitors": self.monitors}, f, indent=2)
+            json.dump({"version": 2, "monitors": self.monitors, "layout": self.layout}, f, indent=2)
         os.replace(tmp, STATE_FILE)
 
 
@@ -128,15 +158,22 @@ class Controller:
             self.identify[key] = zone
             self.lock.notify()
 
+    def set_layout(self, layout):
+        if not isinstance(layout, dict):
+            raise ValueError("disposizione non valida")
+        with self.lock:
+            self.store.set_layout(layout)
+
     def status(self):
         with self.lock:
             monitors = []
             for key, entry in self.store.monitors.items():
                 slot = self.slots.get(key)
+                pos = self.store.layout.get(key, {"x": 0.0, "y": 0.0})
                 monitors.append({"key": key, "model": models.public(MODELS_BY_ID[entry["model"]]),
                                  "connected": slot is not None, "device": slot.device["path"] if slot else None,
-                                 "error": self.errors.get(key), "state": entry["state"]})
-            monitors.sort(key=lambda m: not m["connected"])
+                                 "error": self.errors.get(key), "state": entry["state"], "pos": pos})
+            monitors.sort(key=lambda m: (m["pos"]["x"], m["pos"]["y"]))
             return {"monitors": monitors, "notes": self.notes,
                     "supported": [m["name"] for m in models.MODELS]}
 
@@ -198,8 +235,24 @@ controller = Controller()
 
 
 class Handler(BaseHTTPRequestHandler):
+    JS = "text/javascript; charset=utf-8"
     FILES = {"/": ("index.html", "text/html; charset=utf-8"),
-             "/i18n.js": ("i18n.js", "text/javascript; charset=utf-8"),
+             "/i18n.js": ("i18n.js", JS),
+             "/viewer3d.js": ("viewer3d.js", JS),
+             "/vendor/three.module.js": ("vendor/three.module.js", JS),
+             "/vendor/OrbitControls.js": ("vendor/OrbitControls.js", JS),
+             "/vendor/RoomEnvironment.js": ("vendor/RoomEnvironment.js", JS),
+             "/vendor/Reflector.js": ("vendor/Reflector.js", JS),
+             "/vendor/postprocessing/EffectComposer.js": ("vendor/postprocessing/EffectComposer.js", JS),
+             "/vendor/postprocessing/RenderPass.js": ("vendor/postprocessing/RenderPass.js", JS),
+             "/vendor/postprocessing/ShaderPass.js": ("vendor/postprocessing/ShaderPass.js", JS),
+             "/vendor/postprocessing/MaskPass.js": ("vendor/postprocessing/MaskPass.js", JS),
+             "/vendor/postprocessing/UnrealBloomPass.js": ("vendor/postprocessing/UnrealBloomPass.js", JS),
+             "/vendor/postprocessing/OutputPass.js": ("vendor/postprocessing/OutputPass.js", JS),
+             "/vendor/postprocessing/Pass.js": ("vendor/postprocessing/Pass.js", JS),
+             "/vendor/shaders/CopyShader.js": ("vendor/shaders/CopyShader.js", JS),
+             "/vendor/shaders/LuminosityHighPassShader.js": ("vendor/shaders/LuminosityHighPassShader.js", JS),
+             "/vendor/shaders/OutputShader.js": ("vendor/shaders/OutputShader.js", JS),
              "/manifest.json": ("manifest.json", "application/manifest+json"),
              "/fonts/instrument-sans.woff2": ("fonts/instrument-sans.woff2", "font/woff2")}
 
@@ -236,6 +289,8 @@ class Handler(BaseHTTPRequestHandler):
                 controller.set_state(body.get("key"), body.get("state", {}))
             elif self.path == "/api/identify":
                 controller.request_identify(body.get("key"), body.get("zone"))
+            elif self.path == "/api/layout":
+                controller.set_layout(body.get("layout", {}))
             else:
                 return self._send(404, {"error": "not found"})
         except (ValueError, TypeError, AttributeError) as e:

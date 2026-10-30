@@ -22,10 +22,15 @@ across reboots, monitor power cycles and cable reconnections.
 
 ## Contents
 
-[Features](#features) · [Supported monitors](#supported-monitors) · [Requirements](#requirements) · [Installation](#installation) · [Command line](#command-line) · [How it works](#how-it-works) · [Languages](#languages) · [Known issues](#known-issues) · [Contributing](#help-support-more-models) · [License](#credits-and-license)
+[Features](#features) · [Supported monitors](#supported-monitors) · [Requirements](#requirements) · [Installation](#installation) · [Command line](#command-line) · [How it works](#how-it-works) · [3D view](#3d-view) · [Multi-monitor arrangement](#multi-monitor-arrangement) · [Languages](#languages) · [Known issues](#known-issues) · [Contributing](#help-support-more-models) · [License](#credits-and-license)
 
 ## Features
 
+- **Interactive 3D monitor** (WebGL): drag to rotate, PBR materials, a real reflective floor, studio
+  lighting with soft shadows, bloom on the LEDs, and live LED glow; a full turntable plays when you
+  open a device. Falls back to a 2D view where WebGL (or an optional effect) is unavailable
+- **Multi-monitor arrangement**: drag your monitors into their real desk layout from the sidebar
+  ("Arrange monitors"); left-to-right order drives the sidebar and multi-monitor tools
 - **Automatic detection** of connected MSI monitors and their LED layout
 - **Effects**: static, breathing, color cycle, rainbow, and the native Mystic Light effects
   (blinking, flash, blinds, meteor, random)
@@ -98,6 +103,27 @@ A small Python service talks to them through `/dev/hidraw`. Every two seconds it
 are connected and identifies each model, from the MSI controller or, as a fallback, from the name sent
 over HDMI/DisplayPort (EDID). Settings are stored in `~/.config/monitor-led/state.json`.
 
+## 3D view
+
+The monitor is a real-time WebGL scene (bundled Three.js in `dashboard/vendor/`, served locally — no CDN).
+Drag to rotate, scroll to zoom; selecting a device plays a full turntable. The LED strips are live and
+reflect your current settings. Studio lighting (key, fill, rim) casts soft real shadows, bloom makes the
+LEDs glow, and the floor is a true reflection of the scene where supported. Bloom and the floor reflection
+are loaded as optional extras at runtime: if they fail to load, the 3D view still works without them,
+it just loses those two effects.
+
+For an offline, photorealistic render there is an optional Blender script in
+[`blender/`](blender/README.md) that produces a still and a turntable sequence with Cycles. It is a
+standalone tool (Blender must be installed) and is not required to use the dashboard.
+
+## Multi-monitor arrangement
+
+If more than one supported monitor is detected, a small grid icon appears next to "Devices" in the
+sidebar. It opens a panel where you drag each monitor tile to match its real position on your desk,
+with edges snapping together like in your OS's display settings. The left-to-right order you set there
+drives the order of the device list and is meant for tools that reason across several monitors at once.
+The arrangement is saved by the service (`~/.config/monitor-led/state.json`) and restored on next launch.
+
 ## Languages
 
 The dashboard ships in 15 languages, picked from the dropdown in the sidebar. On first launch the
@@ -133,7 +159,8 @@ The controller protocols and the model table are based on [msigd](https://github
 by couriersud and contributors, licensed under GPL‑2.0. Prisma Control is released under the
 **GNU General Public License v2.0**, see [LICENSE](LICENSE).
 
-Interface font: Instrument Sans, SIL Open Font License (see `dashboard/fonts/OFL.txt`).
+Bundled third-party components keep their own licenses: [Three.js](https://threejs.org) (MIT, in
+`dashboard/vendor/`) and the Instrument Sans font (SIL Open Font License, in `dashboard/fonts/OFL.txt`).
 
 ---
 

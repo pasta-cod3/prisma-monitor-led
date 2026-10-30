@@ -6,6 +6,18 @@
 <title>Prisma Control</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#101217">
+<script type="importmap">
+{ "imports": {
+  "three": "/vendor/three.module.js",
+  "three/OrbitControls": "/vendor/OrbitControls.js",
+  "three/RoomEnvironment": "/vendor/RoomEnvironment.js",
+  "three/EffectComposer": "/vendor/postprocessing/EffectComposer.js",
+  "three/RenderPass": "/vendor/postprocessing/RenderPass.js",
+  "three/UnrealBloomPass": "/vendor/postprocessing/UnrealBloomPass.js",
+  "three/OutputPass": "/vendor/postprocessing/OutputPass.js",
+  "three/Reflector": "/vendor/Reflector.js"
+} }
+</script>
 <style>
   @font-face {
     font-family: "Instrument Sans";
@@ -48,7 +60,11 @@
   .brand svg { width: 26px; height: 26px; }
   .brand b { font-size: 16px; font-weight: 650; letter-spacing: -.01em; font-stretch: 90%; }
   .brand span { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
-  .side h3 { font-size: 12px; font-weight: 500; color: var(--faint); margin: 0 0 8px; padding: 0 8px; }
+  .side h3 { font-size: 12px; font-weight: 500; color: var(--faint); margin: 0; padding: 0 8px; }
+  .devices-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .icon-btn { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; color: var(--muted); }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .icon-btn:hover { color: var(--text); background: rgba(255, 255, 255, .06); }
   .devices { display: grid; gap: 2px; }
   .device { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; padding: 8px; border-radius: 8px; text-align: left; }
   .device:hover { background: rgba(255, 255, 255, .04); }
@@ -79,16 +95,20 @@
   .notes { margin: 0; padding: 10px 28px; list-style: none; border-bottom: 1px solid var(--line); background: rgba(245, 184, 75, .06); }
   .notes li { color: var(--warn); font-size: 13px; }
 
-  .stage { position: relative; flex: 1; min-height: 420px; display: grid; grid-template-rows: auto 1fr auto; padding: 18px 28px 0; overflow: hidden; }
+  .stage { position: relative; flex: 1; min-height: 640px; display: grid; grid-template-rows: auto 1fr auto; padding: 18px 28px 0; overflow: hidden; }
   .stage::before { content: ""; position: absolute; left: 50%; top: 46%; width: 70%; height: 55%; transform: translate(-50%, -50%); background: var(--glow); opacity: calc(.16 * var(--glow-k)); filter: blur(80px); border-radius: 50%; pointer-events: none; }
   .stage-bar { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .seg { display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
   .seg button { padding: 5px 12px; border-radius: 5px; color: var(--muted); font-size: 13px; }
   .seg button.active { background: var(--raised); color: var(--text); }
   .hint { color: var(--faint); font-size: 12px; }
-  .render { position: relative; display: grid; place-items: center; padding: 10px 0; }
+  .render { position: relative; display: grid; place-items: center; padding: 10px 0; min-height: 0; }
   .render svg { width: min(100%, 760px); height: auto; overflow: visible; }
   #back { width: min(100%, 620px); }
+  .render:has(#view3d:not(.hidden)) { height: 100%; }
+  #view3d { width: 100%; height: clamp(480px, 68vh, 840px); display: block; cursor: grab; touch-action: none; }
+  #view3d:active { cursor: grabbing; }
+  .render:has(#view3d:not(.hidden)) svg { display: none; }
   .zone { cursor: pointer; outline: none; }
   .zone .hit { fill: transparent; }
   .zone .ring { fill: none; stroke: var(--text); stroke-width: 1.2; stroke-dasharray: 3 4; opacity: 0; transition: opacity .15s; }
@@ -173,6 +193,18 @@
   .insp-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--muted); }
   .sync { display: flex; align-items: center; gap: 8px; }
 
+  .layout-overlay { position: fixed; inset: 0; z-index: 50; background: rgba(6, 7, 9, .6); backdrop-filter: blur(6px); display: grid; place-items: center; padding: 24px; }
+  .layout-card { width: min(720px, 100%); background: var(--side); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .6); }
+  .layout-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
+  .layout-card h2 { font-size: 17px; font-weight: 600; margin: 0; }
+  .layout-card .hint { margin: 4px 0 0; max-width: 46ch; }
+  .layout-area { position: relative; height: 320px; margin: 22px; border-radius: 12px; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 32px), repeating-linear-gradient(90deg, rgba(255, 255, 255, .025) 0 1px, transparent 1px 32px), var(--panel); border: 1px solid var(--line); touch-action: none; overflow: hidden; }
+  .layout-tile { position: absolute; width: 150px; height: 86px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line); display: grid; place-items: center; text-align: center; padding: 6px; font-size: 12px; color: var(--muted); cursor: grab; user-select: none; transition: box-shadow .15s, border-color .15s; }
+  .layout-tile b { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .layout-tile.dragging { cursor: grabbing; z-index: 5; box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .55); border-color: var(--faint); }
+  .layout-tile .dot { position: absolute; top: 8px; right: 8px; margin: 0; }
+  .layout-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 22px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+
   @media (max-width: 1100px) {
     .shell { grid-template-columns: 200px minmax(0, 1fr); height: auto; }
     .inspector { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
@@ -199,7 +231,12 @@
       <b>Prisma Control<span data-i18n="brand_sub"></span></b>
     </div>
     <nav>
-      <h3 data-i18n="devices"></h3>
+      <div class="devices-head">
+        <h3 data-i18n="devices"></h3>
+        <button class="icon-btn hidden" id="layoutBtn" aria-label="" title="">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="9" height="7" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="5" width="9" height="7" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="14" width="9" height="5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="14" width="9" height="5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </button>
+      </div>
       <div class="devices" id="devices"></div>
     </nav>
     <div class="side-foot">
@@ -240,6 +277,7 @@
         <span class="hint" data-i18n="zone_hint"></span>
       </div>
       <div class="render">
+        <canvas id="view3d" class="hidden" aria-label="Monitor 3D"></canvas>
         <svg viewBox="0 0 640 400" id="front" role="group" aria-label="Fronte del monitor">
           <defs>
             <filter id="bloom" filterUnits="userSpaceOnUse" x="-100" y="-100" width="840" height="600"><feGaussianBlur stdDeviation="8"/></filter>
@@ -322,10 +360,29 @@
       <button class="btn" id="identify" data-i18n="identify"></button>
     </div>
   </aside>
+
+  <div class="layout-overlay hidden" id="layoutOverlay" role="dialog" aria-modal="true" aria-labelledby="layoutTitle">
+    <div class="layout-card">
+      <header>
+        <div>
+          <h2 id="layoutTitle" data-i18n="layout_title"></h2>
+          <p class="hint" data-i18n="layout_hint"></p>
+        </div>
+        <button class="icon-btn" id="layoutClose" aria-label="">✕</button>
+      </header>
+      <div class="layout-area" id="layoutArea"></div>
+      <div class="layout-foot">
+        <span class="sync"><i class="dot" id="layoutDot"></i><span id="layoutSaved" aria-live="polite"></span></span>
+        <button class="btn" id="layoutReset" data-i18n="layout_reset"></button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="/i18n.js"></script>
-<script>
+<script type="module">
+import { Monitor3D, webglAvailable } from "/viewer3d.js";
+let viewer = null, use3d = false;
 const ICON = {
   off: '<circle cx="11" cy="6" r="4.5" fill="none" stroke="currentColor"/><path d="M5 11 L17 1" stroke="currentColor"/>',
   static: '<circle cx="11" cy="6" r="5" fill="currentColor"/>',
@@ -390,7 +447,10 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
   const sel = document.getElementById("lang");
   if (sel && sel.value !== lang) sel.value = lang;
+  $("layoutBtn").title = $("layoutBtn").ariaLabel = t("layout_open");
+  $("layoutClose").title = $("layoutClose").ariaLabel = t("layout_close");
   renderNotes();
+  if (layoutOpen) renderLayoutArea();
   if (current) { buildEffects(); buildPresets(); renderDevices(); renderHeader(); renderInfo(); render(); }
   else { renderDevices(); renderHeader(); }
 }
@@ -472,19 +532,14 @@ function splitPolyline(pts, n) {
 const pathOf = (pts) => "M" + pts.map((p) => p.map((v) => v.toFixed(1)).join(" ")).join(" L");
 
 function buildZones() {
-  $("front-zones").replaceChildren();
-  $("back-zones").replaceChildren();
   $("zones").replaceChildren();
-  els = {};
-  const front = model.zones.filter((z) => z.view === "front");
-  const back = model.zones.filter((z) => z.view === "back");
-  const span = 500 / Math.max(front.length, 1);
-  front.forEach((z, i) => {
-    const x0 = 70 + i * span, x1 = x0 + span - 14;
-    const pts = Array.from({ length: 9 }, (_, k) => { const x = x0 + ((x1 - x0) * k) / 8; return [x, curveY(x)]; });
-    addZone(z, pts, "front-zones", "bloom", 14);
-  });
-  back.forEach((z, i) => addZone(z, backShape(z, i, back.length), "back-zones", "bloom-b", 14));
+  if (use3d) {
+    viewer.build(model);
+    viewer.resize();
+    viewer.spin();
+  } else {
+    buildSvgZones();
+  }
 
   if (IDS.length > 1) {
     const all = make("button", { className: "chip all", textContent: t("chip_all") });
@@ -505,10 +560,26 @@ function buildZones() {
   showView();
 }
 
+function buildSvgZones() {
+  $("front-zones").replaceChildren();
+  $("back-zones").replaceChildren();
+  els = {};
+  const front = model.zones.filter((z) => z.view === "front");
+  const back = model.zones.filter((z) => z.view === "back");
+  const span = 500 / Math.max(front.length, 1);
+  front.forEach((z, i) => {
+    const x0 = 70 + i * span, x1 = x0 + span - 14;
+    const pts = Array.from({ length: 9 }, (_, k) => { const x = x0 + ((x1 - x0) * k) / 8; return [x, curveY(x)]; });
+    addZone(z, pts, "front-zones", "bloom", 14);
+  });
+  back.forEach((z, i) => addZone(z, backShape(z, i, back.length), "back-zones", "bloom-b", 14));
+}
+
 function showView() {
+  document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  if (use3d) { viewer.snapTo(view); return; }
   $("front").classList.toggle("hidden", view !== "front");
   $("back").classList.toggle("hidden", view !== "back");
-  document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
   document.querySelectorAll("[data-chip]").forEach((c) => c.classList.toggle("hidden", viewsOf().length > 1 && ZONES[c.dataset.chip].view !== view));
 }
 
@@ -569,11 +640,15 @@ function frame(t) {
     for (const id of IDS) {
       const cfg = state.zones[id];
       now[id] = colorAt(cfg, t);
-      const { leds, n } = els[id];
-      leds.forEach((pair, i) => {
-        const hex = cfg.effect === "leds" ? cfg.colors[Math.min(Math.floor((i * n) / leds.length), cfg.colors.length - 1)] : rgbHex(now[id]);
-        pair.forEach((p) => p.setAttribute("stroke", hex));
-      });
+      if (use3d) {
+        viewer.setLeds(id, cfg.effect === "leds" ? pad(cfg.colors, ZONES[id].leds).map(hexRgb) : [now[id]]);
+      } else {
+        const { leds, n } = els[id];
+        leds.forEach((pair, i) => {
+          const hex = cfg.effect === "leds" ? cfg.colors[Math.min(Math.floor((i * n) / leds.length), cfg.colors.length - 1)] : rgbHex(now[id]);
+          pair.forEach((p) => p.setAttribute("stroke", hex));
+        });
+      }
       const chip = document.querySelector(`[data-chip="${id}"] i`);
       if (chip) chip.style.setProperty("--c", rgbHex(now[id]));
     }
@@ -582,9 +657,15 @@ function frame(t) {
     const root = document.documentElement.style;
     root.setProperty("--glow", glow);
     root.setProperty("--glow-k", (0.2 + 0.8 * state.brightness / 100).toFixed(3));
-    $("desk").setAttribute("fill", rgbHex(mix(IDS.filter((z) => ZONES[z].view === "front").map((z) => now[z]).concat([[0, 0, 0]]))));
     const thumb = document.querySelector(".device.active .thumb");
     if (thumb) thumb.style.setProperty("--c", rgbHex(mix(IDS.map((z) => now[z]))));
+    if (use3d) {
+      viewer.setBrightness(0.2 + 0.8 * state.brightness / 100);
+      viewer.highlight(selected);
+      viewer.update(t);
+    } else {
+      $("desk").setAttribute("fill", rgbHex(mix(IDS.filter((z) => ZONES[z].view === "front").map((z) => now[z]).concat([[0, 0, 0]]))));
+    }
   }
   requestAnimationFrame(frame);
 }
@@ -601,6 +682,143 @@ function renderDevices() {
     box.appendChild(b);
   }
   if (!monitors.length) box.appendChild(make("p", { className: "hint", textContent: t("no_devices") }));
+  $("layoutBtn").classList.toggle("hidden", monitors.length < 2);
+}
+
+
+const LAYOUT_TW = 150, LAYOUT_TH = 86, LAYOUT_UX = 168, LAYOUT_UY = 108, LAYOUT_PAD = 16;
+let layoutOpen = false;
+let layoutDragKey = null;
+let layoutSendTimer = null;
+let layoutOrigin = { x: 0, y: 0 };
+
+function setLayoutSync(text, kind) {
+  $("layoutSaved").textContent = text;
+  $("layoutDot").className = "dot" + (kind ? " " + kind : "");
+}
+
+function openLayout() {
+  layoutOpen = true;
+  $("layoutOverlay").classList.remove("hidden");
+  renderLayoutArea();
+  setLayoutSync("", "");
+}
+
+function closeLayout() {
+  layoutOpen = false;
+  $("layoutOverlay").classList.add("hidden");
+}
+
+function layoutToPx(pos) {
+  return { left: pos.x * LAYOUT_UX - layoutOrigin.x, top: pos.y * LAYOUT_UY - layoutOrigin.y };
+}
+
+function layoutFromPx(left, top) {
+  return {
+    x: Math.round(((left + layoutOrigin.x) / LAYOUT_UX) * 100) / 100,
+    y: Math.round(((top + layoutOrigin.y) / LAYOUT_UY) * 100) / 100,
+  };
+}
+
+function renderLayoutArea() {
+  const xs = monitors.map((m) => (m.pos || { x: 0 }).x * LAYOUT_UX);
+  const ys = monitors.map((m) => (m.pos || { y: 0 }).y * LAYOUT_UY);
+  layoutOrigin = { x: (xs.length ? Math.min(...xs) : 0) - LAYOUT_PAD, y: (ys.length ? Math.min(...ys) : 0) - LAYOUT_PAD };
+  const area = $("layoutArea");
+  area.replaceChildren();
+  for (const m of monitors) {
+    if (m.key === layoutDragKey) continue;
+    area.appendChild(buildLayoutTile(m));
+  }
+}
+
+function buildLayoutTile(m) {
+  const px = layoutToPx(m.pos || { x: 0, y: 0 });
+  const tile = make("div", { className: "layout-tile" });
+  tile.style.left = px.left + "px";
+  tile.style.top = px.top + "px";
+  tile.append(
+    make("i", { className: "dot" + (m.connected ? " on" : "") }),
+    make("div", {}, make("b", { textContent: m.model.name.replace(/^MSI\s+/, "") }),
+      make("span", { textContent: t(m.connected ? "connected" : "not_connected") })),
+  );
+  makeLayoutDraggable(tile, m.key);
+  return tile;
+}
+
+function layoutSnap(mkey, left, top) {
+  const SNAP = 12;
+  let sx = left, sy = top;
+  const zeroPx = layoutToPx({ x: 0, y: 0 });
+  if (Math.abs(left - zeroPx.left) < SNAP) sx = zeroPx.left;
+  if (Math.abs(top - zeroPx.top) < SNAP) sy = zeroPx.top;
+  for (const m of monitors) {
+    if (m.key === mkey) continue;
+    const o = layoutToPx(m.pos || { x: 0, y: 0 });
+    if (Math.abs(top - o.top) < SNAP) sy = o.top;
+    if (Math.abs(left - (o.left + LAYOUT_UX)) < SNAP) sx = o.left + LAYOUT_UX;
+    else if (Math.abs(left - (o.left - LAYOUT_UX)) < SNAP) sx = o.left - LAYOUT_UX;
+    else if (Math.abs(left - o.left) < SNAP) sx = o.left;
+  }
+  return { left: sx, top: sy };
+}
+
+function makeLayoutDraggable(tile, mkey) {
+  tile.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    tile.setPointerCapture(e.pointerId);
+    tile.classList.add("dragging");
+    layoutDragKey = mkey;
+    const startX = e.clientX, startY = e.clientY;
+    const origLeft = parseFloat(tile.style.left) || 0, origTop = parseFloat(tile.style.top) || 0;
+    const area = $("layoutArea");
+
+    const onMove = (ev) => {
+      const bounds = area.getBoundingClientRect();
+      let left = origLeft + (ev.clientX - startX), top = origTop + (ev.clientY - startY);
+      left = Math.max(2, Math.min(bounds.width - LAYOUT_TW - 2, left));
+      top = Math.max(2, Math.min(bounds.height - LAYOUT_TH - 2, top));
+      const snapped = layoutSnap(mkey, left, top);
+      tile.style.left = snapped.left + "px";
+      tile.style.top = snapped.top + "px";
+    };
+    const onUp = (ev) => {
+      tile.releasePointerCapture(ev.pointerId);
+      tile.removeEventListener("pointermove", onMove);
+      tile.removeEventListener("pointerup", onUp);
+      tile.classList.remove("dragging");
+      layoutDragKey = null;
+      const left = parseFloat(tile.style.left) || 0, top = parseFloat(tile.style.top) || 0;
+      const pos = layoutFromPx(left, top);
+      const m = monitors.find((x) => x.key === mkey);
+      if (m) m.pos = pos;
+      monitors.sort((a, b) => (a.pos?.x ?? 0) - (b.pos?.x ?? 0) || (a.pos?.y ?? 0) - (b.pos?.y ?? 0));
+      renderDevices();
+      queueLayoutSave();
+    };
+    tile.addEventListener("pointermove", onMove);
+    tile.addEventListener("pointerup", onUp);
+  });
+}
+
+let layoutPending = null;
+
+function queueLayoutSave() {
+  clearTimeout(layoutSendTimer);
+  setLayoutSync(t("layout_sending"), "warn");
+  const layout = {};
+  for (const m of monitors) layout[m.key] = m.pos || { x: 0, y: 0 };
+  layoutPending = layout;
+  layoutSendTimer = setTimeout(async () => {
+    try {
+      await post("/api/layout", { layout });
+      setLayoutSync(t("layout_saved"), "on");
+    } catch (e) {
+      setLayoutSync(t("layout_save_fail", e.message), "warn");
+    } finally {
+      if (layoutPending === layout) layoutPending = null;
+    }
+  }, 350);
 }
 
 function select(key) {
@@ -689,6 +907,10 @@ function applyStatus(s) {
     if (old) m.state = old.state;
   }
   monitors = s.monitors;
+  if (layoutPending) {
+    for (const m of monitors) if (layoutPending[m.key]) m.pos = layoutPending[m.key];
+    monitors.sort((a, b) => (a.pos?.x ?? 0) - (b.pos?.x ?? 0) || (a.pos?.y ?? 0) - (b.pos?.y ?? 0));
+  }
   if (!monitors.length) {
     current = model = state = null;
     renderDevices();
@@ -703,6 +925,7 @@ function applyStatus(s) {
     renderInfo();
     $("identify").disabled = selected.size !== 1 || !current.connected;
   }
+  if (layoutOpen && !layoutDragKey) renderLayoutArea();
 }
 
 const primary = () => state.zones[[...selected][0]];
@@ -901,6 +1124,16 @@ function wire() {
   for (const l of LANGS) sel.appendChild(make("option", { value: l.code, textContent: l.name }));
   sel.value = lang;
   sel.addEventListener("change", () => setLang(sel.value));
+  $("layoutBtn").addEventListener("click", openLayout);
+  $("layoutClose").addEventListener("click", closeLayout);
+  $("layoutOverlay").addEventListener("click", (e) => { if (e.target.id === "layoutOverlay") closeLayout(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && layoutOpen) closeLayout(); });
+  $("layoutReset").addEventListener("click", () => {
+    monitors.forEach((m, i) => { m.pos = { x: i, y: 0 }; });
+    renderLayoutArea();
+    renderDevices();
+    queueLayoutSave();
+  });
   document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; showTab(); }));
   document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => {
     view = b.dataset.view;
@@ -949,13 +1182,32 @@ function wire() {
   });
 }
 
+function setup3d() {
+  if (!webglAvailable()) return;
+  try {
+    viewer = new Monitor3D($("view3d"));
+    viewer.onPick((id, e) => pickZone(id, e));
+    use3d = true;
+    $("view3d").classList.remove("hidden");
+    const ro = new ResizeObserver(() => viewer.resize());
+    ro.observe($("view3d"));
+    addEventListener("resize", () => viewer.resize());
+  } catch (err) {
+    viewer = null;
+    use3d = false;
+    $("view3d").classList.add("hidden");
+  }
+}
+
 (async function init() {
   if (new URLSearchParams(location.search).get("tab") === "info") tab = "info";
   lang = pickLang();
+  setup3d();
   wire();
   applyI18n();
   $("svc").replaceChildren(make("i", { className: "dot" }), t("svc_starting"));
   await poll();
+  if (new URLSearchParams(location.search).get("layout") === "1") openLayout();
   requestAnimationFrame(frame);
   setInterval(poll, 3000);
 })();

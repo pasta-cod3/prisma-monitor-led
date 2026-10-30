@@ -22,10 +22,16 @@ dopo riavvii, spegnimenti del monitor e ricollegamenti del cavo.
 
 ## Indice
 
-[Funzioni](#funzioni) · [Monitor supportati](#monitor-supportati) · [Requisiti](#requisiti) · [Installazione](#installazione) · [Riga di comando](#riga-di-comando) · [Come funziona](#come-funziona) · [Lingue](#lingue) · [Problemi noti](#problemi-noti) · [Contribuire](#aiutare-a-supportare-altri-modelli) · [Licenza](#crediti-e-licenza)
+[Funzioni](#funzioni) · [Monitor supportati](#monitor-supportati) · [Requisiti](#requisiti) · [Installazione](#installazione) · [Riga di comando](#riga-di-comando) · [Come funziona](#come-funziona) · [Vista 3D](#vista-3d) · [Disposizione multi-monitor](#disposizione-multi-monitor) · [Lingue](#lingue) · [Problemi noti](#problemi-noti) · [Contribuire](#aiutare-a-supportare-altri-modelli) · [Licenza](#crediti-e-licenza)
 
 ## Funzioni
 
+- **Monitor 3D interattivo** (WebGL): si ruota trascinando, materiali PBR, un vero pavimento riflettente,
+  luce da studio con ombre morbide, bloom sui LED e bagliore dal vivo; alla selezione di un dispositivo
+  parte una rotazione completa. Ripiega su una vista 2D dove WebGL (o un effetto opzionale) non è disponibile
+- **Disposizione multi-monitor**: trascina i tuoi monitor nella loro posizione reale sulla scrivania
+  dalla barra laterale ("Disponi i monitor"); l'ordine da sinistra a destra guida la barra laterale
+  e gli strumenti che coinvolgono più monitor
 - **Rilevamento automatico** dei monitor MSI collegati e della disposizione dei loro LED
 - **Effetti**: fisso, respiro, ciclo di colori, arcobaleno e gli effetti nativi Mystic Light
   (lampeggio, flash, tende, meteora, casuale)
@@ -99,6 +105,28 @@ Un piccolo servizio Python parla con loro tramite `/dev/hidraw`. Ogni due second
 sono collegati e riconosce il modello, dal controller MSI oppure, in mancanza, dal nome trasmesso via
 HDMI/DisplayPort (EDID). Le impostazioni stanno in `~/.config/monitor-led/state.json`.
 
+## Vista 3D
+
+Il monitor è una scena WebGL in tempo reale (Three.js incluso in `dashboard/vendor/`, servito in locale,
+senza CDN). Si ruota trascinando, si zooma con la rotellina; alla selezione di un dispositivo parte una
+rotazione completa. Le strisce LED sono dal vivo e seguono le tue impostazioni. Una luce da studio (key,
+fill, controluce) proietta ombre morbide reali, il bloom fa risplendere i LED e il pavimento è un vero
+riflesso della scena dove supportato. Bloom e riflesso del pavimento sono extra caricati a runtime: se
+non si caricano, la vista 3D funziona comunque, solo senza quei due effetti.
+
+Per un render fotorealistico offline c'è uno script Blender opzionale in
+[`blender/`](blender/README.md) che produce un fermo immagine e una rotazione con Cycles. È uno strumento
+a sé (serve Blender installato) e non è necessario per usare la dashboard.
+
+## Disposizione multi-monitor
+
+Se viene rilevato più di un monitor supportato, accanto a "Dispositivi" nella barra laterale compare
+una piccola icona a griglia. Apre un pannello dove trascini ogni monitor nella sua posizione reale sulla
+scrivania, con i bordi che si agganciano come nelle impostazioni schermo del sistema operativo. L'ordine
+da sinistra a destra che imposti lì guida l'ordine dell'elenco dei dispositivi ed è pensato per gli
+strumenti che ragionano su più monitor insieme. La disposizione viene salvata dal servizio
+(`~/.config/monitor-led/state.json`) e ripristinata al prossimo avvio.
+
 ## Lingue
 
 La dashboard è tradotta in 15 lingue, scelte dal menu a tendina nella barra laterale. Al primo avvio
@@ -135,7 +163,8 @@ I protocolli dei controller e la tabella dei modelli derivano da [msigd](https:/
 di couriersud e collaboratori, con licenza GPL‑2.0. Prisma Control è distribuito con licenza
 **GNU General Public License v2.0**, vedi [LICENSE](LICENSE).
 
-Font dell'interfaccia: Instrument Sans, SIL Open Font License (vedi `dashboard/fonts/OFL.txt`).
+I componenti di terze parti inclusi mantengono la loro licenza: [Three.js](https://threejs.org) (MIT, in
+`dashboard/vendor/`) e il font Instrument Sans (SIL Open Font License, in `dashboard/fonts/OFL.txt`).
 
 ---
 
