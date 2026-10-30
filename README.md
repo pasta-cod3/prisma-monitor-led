@@ -1,2 +1,216 @@
-# prisma-monitor-led
-Control the RGB LEDs of MSI monitors (Mystic Light &amp; SteelSeries) on Linux from a local web dashboard. Auto-detects the model, supports effects and per-LED colors, and restores settings on boot. Pure Python 3, no dependencies. Unofficial.
+# Prisma Control
+
+**English** · [Italiano](README.it.md)
+
+Control the RGB lighting of MSI monitors on Linux from a local web dashboard.
+Prisma detects the connected monitor, shows its LED zones and keeps your settings
+across reboots, monitor power cycles and cable reconnections.
+
+![Prisma Control dashboard](docs/screenshot.png)
+
+## Features
+
+- **Automatic detection** of connected MSI monitors and their LED layout
+- **Effects**: static, breathing, color cycle, rainbow, and the native Mystic Light effects
+  (blinking, flash, blinds, meteor, random)
+- **Per-LED colors** on supported zones, with gradient and fill tools
+- **Multiple monitors** at once, each with its own settings
+- **Persistent**: settings are reapplied at boot and whenever the monitor reappears on USB,
+  and saved into the monitor's memory where supported
+- **No dependencies**: pure Python 3 standard library, works offline on `http://127.0.0.1:7878`
+
+## Supported monitors
+
+| Model | LED controller | Status |
+|---|---|---|
+| Optix MPG27CQ | SteelSeries | ✅ tested |
+| Optix MPG341CQR | SteelSeries | 🧪 experimental, zone layout unknown |
+| MAG321CURV, MAG321CQR, MAG241CR, MAG271CR, MAG271CQR, MAG272CQR, MAG272QP, MAG251RX | Mystic Light | 🧪 experimental |
+| MPG273CQR, MAG274R, MAG274QRF-QD, MAG274QRX | Mystic Light (Optix) | 🧪 experimental |
+
+*Experimental* means the protocol is documented by msigd but Prisma has not yet been confirmed
+on that model. If you own one, please report whether it works.
+
+## Requirements
+
+- Linux with systemd
+- Python 3.8 or newer
+- The monitor's **USB upstream cable** (USB‑B port on the back) connected to the computer.
+  The LEDs are controlled over USB, not over the video cable. Once set, colors are stored
+  in the monitor, so the cable is only needed to change them.
+
+## Installation
+
+```sh
+git clone https://github.com/<user>/prisma-monitor-led.git
+cd prisma-monitor-led
+./install.sh
+```
+
+The installer asks for sudo only to add a udev rule, so the monitor's controllers can be used
+without root. It then starts the `monitor-led` user service and adds **Prisma Control** to the
+application menu. Open the dashboard from there or at `http://127.0.0.1:7878`.
+
+## Command line
+
+Run from `~/.local/share/monitor-led`:
+
+```sh
+python3 -m msiled --detect          # show detected monitors, zones and LED counts
+python3 -m msiled --list-models     # list known models
+python3 -m msiled --color ff0000    # set a static color on the first monitor
+```
+
+## Uninstall
+
+```sh
+./uninstall.sh            # keeps your saved settings
+./uninstall.sh --purge    # removes the settings too
+```
+
+The LEDs keep the last color saved in the monitor.
+
+## How it works
+
+Many MSI monitors contain a USB hub with one or two controllers:
+
+- **MSI Gaming Controller** (`1462:3fa4`): reports the model ID and drives the LEDs on Mystic Light monitors
+- **SteelSeries MLC** (`1038:1126`): drives the LEDs on some MPG models
+
+A small Python service talks to them through `/dev/hidraw`. Every two seconds it checks which monitors
+are connected and identifies each model, from the MSI controller or, as a fallback, from the name sent
+over HDMI/DisplayPort (EDID). Settings are stored in `~/.config/monitor-led/state.json`.
+
+## Known issues
+
+- On the MPG27CQ, animated effects (breathing, cycle, rainbow) may stop after being saved into the
+  monitor's memory. Static and per-LED colors are not affected. A fix is being investigated.
+- The interface is currently in Italian.
+
+## Help support more models
+
+- **Model detected but LEDs wrong or missing** (SteelSeries controller): run `python3 diag.py` from
+  `~/.local/share/monitor-led` while watching the monitor, and report what lights up at each step.
+- **Model not detected**: open an issue with the output of `python3 -m msiled --detect` and the exact model name.
+
+## Disclaimer
+
+Prisma Control is an independent, unofficial project. It is not affiliated with, endorsed or supported
+by MSI or SteelSeries. Model names are used only to describe compatibility. The protocols were
+reverse-engineered: use at your own risk. The monitor's on-screen menu (OSD) is never modified.
+
+## Credits and license
+
+The controller protocols and the model table are based on [msigd](https://github.com/couriersud/msigd)
+by couriersud and contributors, licensed under GPL‑2.0. Prisma Control is released under the
+**GNU General Public License v2.0**, see [LICENSE](LICENSE).
+
+_______________________________________________________________________________________________________
+
+# Prisma Control
+
+[English](README.md) · **Italiano**
+
+Comanda l'illuminazione RGB dei monitor MSI su Linux da una dashboard nel browser.
+Prisma riconosce il monitor collegato, ne mostra le zone LED e conserva le impostazioni
+dopo riavvii, spegnimenti del monitor e ricollegamenti del cavo.
+
+![Dashboard di Prisma Control](docs/screenshot.png)
+
+## Funzioni
+
+- **Rilevamento automatico** dei monitor MSI collegati e della disposizione dei loro LED
+- **Effetti**: fisso, respiro, ciclo di colori, arcobaleno e gli effetti nativi Mystic Light
+  (lampeggio, flash, tende, meteora, casuale)
+- **Colore per singolo LED** sulle zone che lo permettono, con sfumatura e copia rapida
+- **Più monitor** insieme, ognuno con le sue impostazioni
+- **Impostazioni persistenti**: vengono riapplicate all'avvio e ogni volta che il monitor ricompare
+  sulla USB, e salvate nella memoria del monitor quando il modello lo consente
+- **Nessuna dipendenza**: solo la libreria standard di Python 3, funziona anche senza internet
+  su `http://127.0.0.1:7878`
+
+## Monitor supportati
+
+| Modello | Controller LED | Stato |
+|---|---|---|
+| Optix MPG27CQ | SteelSeries | ✅ provato |
+| Optix MPG341CQR | SteelSeries | 🧪 sperimentale, zone sconosciute |
+| MAG321CURV, MAG321CQR, MAG241CR, MAG271CR, MAG271CQR, MAG272CQR, MAG272QP, MAG251RX | Mystic Light | 🧪 sperimentale |
+| MPG273CQR, MAG274R, MAG274QRF-QD, MAG274QRX | Mystic Light (Optix) | 🧪 sperimentale |
+
+*Sperimentale* vuol dire che il protocollo è documentato da msigd, ma Prisma non è ancora stato
+verificato su quel modello. Se ne hai uno, una segnalazione con l'esito è molto utile.
+
+## Requisiti
+
+- Linux con systemd
+- Python 3.8 o successivo
+- Il **cavo USB** del monitor (presa USB‑B sul retro) collegato al computer. I LED si comandano
+  dalla USB, non dal cavo video. Una volta impostati, i colori restano salvati nel monitor:
+  il cavo serve solo per cambiarli.
+
+## Installazione
+
+```sh
+git clone https://github.com/<utente>/prisma-monitor-led.git
+cd prisma-monitor-led
+./install.sh
+```
+
+Lo script chiede la password di sudo solo per aggiungere una regola udev, che permette di usare i
+controller del monitor senza root. Poi avvia il servizio utente `monitor-led` e aggiunge
+**Prisma Control** al menu applicazioni. La dashboard si apre da lì o su `http://127.0.0.1:7878`.
+
+## Riga di comando
+
+Dalla cartella `~/.local/share/monitor-led`:
+
+```sh
+python3 -m msiled --detect          # monitor rilevati, zone e numero di LED
+python3 -m msiled --list-models     # modelli conosciuti
+python3 -m msiled --color ff0000    # colore fisso sul primo monitor
+```
+
+## Disinstallazione
+
+```sh
+./uninstall.sh            # mantiene le impostazioni salvate
+./uninstall.sh --purge    # cancella anche le impostazioni
+```
+
+I LED restano con l'ultimo colore salvato nel monitor.
+
+## Come funziona
+
+Molti monitor MSI contengono un hub USB con uno o due controller:
+
+- **MSI Gaming Controller** (`1462:3fa4`): comunica il modello e comanda i LED dei monitor Mystic Light
+- **SteelSeries MLC** (`1038:1126`): comanda i LED di alcuni modelli MPG
+
+Un piccolo servizio Python parla con loro tramite `/dev/hidraw`. Ogni due secondi controlla quali monitor
+sono collegati e riconosce il modello, dal controller MSI oppure, in mancanza, dal nome trasmesso via
+HDMI/DisplayPort (EDID). Le impostazioni stanno in `~/.config/monitor-led/state.json`.
+
+## Problemi noti
+
+- Sull'MPG27CQ gli effetti animati (respiro, ciclo, arcobaleno) possono fermarsi dopo il salvataggio
+  nella memoria del monitor. I colori fissi e per singolo LED non ne risentono. La correzione è in corso.
+
+## Aiutare a supportare altri modelli
+
+- **Modello riconosciuto ma LED sbagliati o mancanti** (controller SteelSeries): lancia `python3 diag.py`
+  da `~/.local/share/monitor-led` guardando il monitor, e segnala cosa si accende a ogni passo.
+- **Modello non riconosciuto**: apri una segnalazione con l'output di `python3 -m msiled --detect`
+  e il nome esatto del modello.
+
+## Avvertenze
+
+Prisma Control è un progetto indipendente e non ufficiale: non è affiliato, approvato né supportato
+da MSI o SteelSeries. I nomi dei modelli servono solo a indicare la compatibilità. I protocolli sono
+stati ricavati per ingegneria inversa: l'uso è a tuo rischio. Il menu del monitor (OSD) non viene mai modificato.
+
+## Crediti e licenza
+
+I protocolli dei controller e la tabella dei modelli derivano da [msigd](https://github.com/couriersud/msigd)
+di couriersud e collaboratori, con licenza GPL‑2.0. Prisma Control è distribuito con licenza
+**GNU General Public License v2.0**, vedi [LICENSE](LICENSE).
