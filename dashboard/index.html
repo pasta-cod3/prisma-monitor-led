@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prisma Control</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#101217">
+<style>
+  @font-face {
+    font-family: "Instrument Sans";
+    src: url(/fonts/instrument-sans.woff2) format("woff2");
+    font-weight: 400 700;
+    font-stretch: 75% 100%;
+    font-display: swap;
+  }
+  :root {
+    --bg: #101217;
+    --side: #14161c;
+    --panel: #181b22;
+    --raised: #20242d;
+    --line: #2a2f3a;
+    --text: #e8eaf0;
+    --muted: #8b91a1;
+    --faint: #5d6372;
+    --ok: #3ecf8e;
+    --warn: #f5b84b;
+    --led: #ff2a2a;
+    --glow: #ff2a2a;
+    --glow-k: 1;
+    font-family: "Instrument Sans", "Cantarell", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); }
+  button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+  .hidden { display: none !important; }
+
+  .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr) 360px; height: 100vh; }
+  .shell:has(> .inspector.hidden) { grid-template-columns: 232px minmax(0, 1fr); }
+
+  .side { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 20px 14px; gap: 26px; overflow-y: auto; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; }
+  .brand svg { width: 26px; height: 26px; }
+  .brand b { font-size: 16px; font-weight: 650; letter-spacing: -.01em; font-stretch: 90%; }
+  .brand span { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+  .side h3 { font-size: 12px; font-weight: 500; color: var(--faint); margin: 0 0 8px; padding: 0 8px; }
+  .devices { display: grid; gap: 2px; }
+  .device { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; padding: 8px; border-radius: 8px; text-align: left; }
+  .device:hover { background: rgba(255, 255, 255, .04); }
+  .device.active { background: var(--raised); }
+  .device .thumb { width: 34px; height: 24px; border-radius: 4px; background: #0b0c10; border: 1px solid var(--line); position: relative; }
+  .device .thumb::after { content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 2px; border-radius: 2px; background: var(--c, #444); box-shadow: 0 0 6px var(--c, transparent); }
+  .device strong { display: block; font-weight: 550; font-size: 13px; }
+  .device small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .dot.warn { background: var(--warn); }
+  .side-foot { margin-top: auto; padding: 0 8px; font-size: 12px; color: var(--faint); display: grid; gap: 4px; }
+  .side-foot .svc { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+
+  .main { display: flex; flex-direction: column; min-width: 0; overflow-y: auto; }
+  .topbar { display: flex; align-items: center; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); }
+  .topbar h1 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0; font-stretch: 92%; }
+  .tag { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: rgba(245, 184, 75, .12); color: var(--warn); }
+  .tag.ok { background: rgba(62, 207, 142, .12); color: var(--ok); }
+  .tabs { margin-left: auto; display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+  .tabs button { padding: 6px 14px; border-radius: 6px; color: var(--muted); }
+  .tabs button.active { background: var(--raised); color: var(--text); }
+
+  .notes { margin: 0; padding: 10px 28px; list-style: none; border-bottom: 1px solid var(--line); background: rgba(245, 184, 75, .06); }
+  .notes li { color: var(--warn); font-size: 13px; }
+
+  .stage { position: relative; flex: 1; min-height: 420px; display: grid; grid-template-rows: auto 1fr auto; padding: 18px 28px 0; overflow: hidden; }
+  .stage::before { content: ""; position: absolute; left: 50%; top: 46%; width: 70%; height: 55%; transform: translate(-50%, -50%); background: var(--glow); opacity: calc(.16 * var(--glow-k)); filter: blur(80px); border-radius: 50%; pointer-events: none; }
+  .stage-bar { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .seg { display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+  .seg button { padding: 5px 12px; border-radius: 5px; color: var(--muted); font-size: 13px; }
+  .seg button.active { background: var(--raised); color: var(--text); }
+  .hint { color: var(--faint); font-size: 12px; }
+  .render { position: relative; display: grid; place-items: center; padding: 10px 0; }
+  .render svg { width: min(100%, 760px); height: auto; overflow: visible; }
+  #back { width: min(100%, 620px); }
+  .zone { cursor: pointer; outline: none; }
+  .zone .hit { fill: transparent; }
+  .zone .ring { fill: none; stroke: var(--text); stroke-width: 1.2; stroke-dasharray: 3 4; opacity: 0; transition: opacity .15s; }
+  .zone.sel .ring { opacity: .85; }
+  .zone:hover .ring { opacity: .4; }
+  .zone:focus-visible .ring { opacity: 1; stroke-dasharray: none; stroke-width: 2; }
+
+  .zones { position: relative; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; padding: 4px 0 18px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 9px; border-radius: 99px; border: 1px solid var(--line); background: rgba(16, 18, 23, .7); color: var(--muted); font-size: 13px; }
+  .chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); }
+  .chip:hover { color: var(--text); }
+  .chip.sel { border-color: var(--text); color: var(--text); }
+  .chip.all { padding-left: 12px; }
+
+  .scenes { border-top: 1px solid var(--line); padding: 16px 28px 22px; background: var(--side); }
+  .scenes h3 { font-size: 13px; font-weight: 550; margin: 0 0 10px; }
+  .scene-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+  .scene { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); text-align: left; overflow: hidden; }
+  .scene:hover { border-color: var(--faint); }
+  .scene i { display: block; height: 34px; background: var(--c); }
+  .scene span { display: block; padding: 8px 10px; font-size: 13px; }
+
+  .info { padding: 24px 28px 40px; display: grid; gap: 22px; max-width: 820px; }
+  .info h2 { font-size: 16px; margin: 0 0 10px; font-weight: 600; }
+  .info dl { display: grid; grid-template-columns: 200px 1fr; margin: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .info dt, .info dd { margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .info dt { color: var(--muted); background: var(--panel); }
+  .info dd { font-variant-numeric: tabular-nums; }
+  .info dl > :nth-last-child(-n+2) { border-bottom: 0; }
+  .info p { color: var(--muted); margin: 0 0 8px; max-width: 70ch; }
+  .info code { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 12.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px; color: var(--text); }
+  .info ol { margin: 0; padding-left: 20px; color: var(--muted); display: grid; gap: 6px; }
+
+  .empty { margin: auto; max-width: 520px; padding: 40px 28px; text-align: center; }
+  .empty svg { width: 120px; margin-bottom: 18px; }
+  .empty h2 { font-size: 20px; margin: 0 0 8px; }
+  .empty p { color: var(--muted); margin: 0 0 12px; }
+
+  .inspector { background: var(--side); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+  .insp-head { padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
+  .insp-head small { color: var(--faint); font-size: 12px; }
+  .insp-head h2 { font-size: 17px; font-weight: 600; margin: 2px 0 0; }
+  .insp-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; min-height: 1.4em; }
+  .insp-body { flex: 1; overflow-y: auto; }
+  .section { padding: 18px 22px; border-bottom: 1px solid var(--line); }
+  .section > header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .section h4 { margin: 0; font-size: 13px; font-weight: 550; }
+  .section output { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px; }
+
+  .effects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .effects button { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 10px 4px 8px; display: grid; justify-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+  .effects button:hover:not(:disabled) { color: var(--text); border-color: var(--faint); }
+  .effects button.active { color: var(--text); border-color: var(--led); box-shadow: inset 0 0 0 1px var(--led), 0 0 18px -8px var(--led); }
+  .effects button:disabled { opacity: .35; cursor: default; }
+  .effects svg { width: 22px; height: 12px; }
+
+  .colors { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .swatch { position: relative; width: 40px; height: 40px; border-radius: 8px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+  .swatch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .swatch .del { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--text); color: var(--bg); font-size: 11px; line-height: 18px; text-align: center; display: none; }
+  .swatch:hover .del, .swatch:focus-within .del { display: block; }
+  .add { width: 40px; height: 40px; border-radius: 8px; border: 1px dashed var(--faint); color: var(--muted); font-size: 18px; }
+  .add:hover { color: var(--text); border-color: var(--text); }
+  .quick { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+  .quick button { width: 22px; height: 22px; border-radius: 6px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+  .quick button:hover { transform: translateY(-1px); }
+  .note { font-size: 12px; color: var(--faint); margin: 10px 0 0; }
+
+  .bar { display: grid; grid-template-columns: repeat(var(--cols, 8), 1fr); gap: 5px; row-gap: 22px; }
+  .bar .swatch { width: auto; height: auto; aspect-ratio: 1; border-radius: 6px; }
+  .bar .swatch.active { box-shadow: 0 0 0 2px var(--side), 0 0 0 3px var(--text); }
+  .bar .swatch span { position: absolute; left: 0; right: 0; bottom: -18px; text-align: center; font-size: 10.5px; color: var(--faint); pointer-events: none; }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 26px; }
+  .tools button, .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 6px 11px; font-size: 12.5px; color: var(--muted); }
+  .tools button:hover, .btn:hover:not(:disabled) { color: var(--text); border-color: var(--faint); }
+  .btn:disabled { opacity: .4; cursor: default; }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 99px; background: var(--line); margin: 6px 0; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--text); border: 3px solid var(--side); box-shadow: 0 0 0 1px var(--faint); cursor: pointer; }
+  #brightness { background: linear-gradient(90deg, #000, var(--led)); }
+
+  .insp-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--muted); }
+  .sync { display: flex; align-items: center; gap: 8px; }
+
+  @media (max-width: 1100px) {
+    .shell { grid-template-columns: 200px minmax(0, 1fr); height: auto; }
+    .inspector { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 720px) {
+    .shell { grid-template-columns: 1fr; }
+    .side { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--line); }
+    .side-foot { display: none; }
+    .tabs { margin-left: 0; }
+    .topbar { flex-wrap: wrap; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <defs><linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d5a"/><stop offset=".5" stop-color="#7a5cff"/><stop offset="1" stop-color="#00d1ff"/></linearGradient></defs>
+        <path d="M16 3 L29 27 H3 Z" fill="none" stroke="url(#pg)" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M16 11 L22 22 H10 Z" fill="url(#pg)" opacity=".85"/>
+      </svg>
+      <b>Prisma Control<span>Illuminazione monitor</span></b>
+    </div>
+    <nav>
+      <h3>Dispositivi</h3>
+      <div class="devices" id="devices"></div>
+    </nav>
+    <div class="side-foot">
+      <span class="svc" id="svc"><i class="dot"></i>Servizio in avvio…</span>
+      <span>Versione 1.0</span>
+    </div>
+  </aside>
+
+  <section class="main">
+    <div class="topbar">
+      <h1 id="title">Prisma Control</h1>
+      <span class="tag hidden" id="support-tag"></span>
+      <div class="tabs" id="tabs" role="tablist">
+        <button class="active" data-tab="light" role="tab">Illuminazione</button>
+        <button data-tab="info" role="tab">Dispositivo</button>
+      </div>
+    </div>
+    <ul class="notes hidden" id="notes"></ul>
+
+    <div class="empty hidden" id="empty">
+      <svg viewBox="0 0 120 80" aria-hidden="true">
+        <rect x="6" y="6" width="108" height="58" rx="5" fill="#0b0c10" stroke="#2a2f3a"/>
+        <path d="M52 64 L68 64 L72 76 L48 76 Z" fill="#1a1d24"/>
+        <path d="M20 58 H100" stroke="#5d6372" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/>
+      </svg>
+      <h2>Nessun dispositivo collegato</h2>
+      <p>Collega il cavo USB del monitor al computer: è la presa USB‑B sul retro. I LED si comandano da lì, non dal cavo video.</p>
+      <p>Il dispositivo compare qui da solo appena viene rilevato.</p>
+    </div>
+
+    <div class="stage hidden" id="stage">
+      <div class="stage-bar">
+        <div class="seg" id="views">
+          <button data-view="front">Fronte</button>
+          <button data-view="back">Retro</button>
+        </div>
+        <span class="hint">Clicca una zona per modificarla. Ctrl o Shift per sceglierne più di una.</span>
+      </div>
+      <div class="render">
+        <svg viewBox="0 0 640 400" id="front" role="group" aria-label="Fronte del monitor">
+          <defs>
+            <filter id="bloom" filterUnits="userSpaceOnUse" x="-100" y="-100" width="840" height="600"><feGaussianBlur stdDeviation="8"/></filter>
+            <filter id="spill" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="22"/></filter>
+            <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1d2028"/><stop offset=".55" stop-color="#121419"/><stop offset="1" stop-color="#191c23"/>
+            </linearGradient>
+            <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <ellipse id="desk" cx="320" cy="388" rx="240" ry="18" filter="url(#spill)" opacity=".55"/>
+          <path d="M296 318 L344 318 L352 370 L288 370 Z" fill="#15171c"/>
+          <path d="M220 370 Q320 360 420 370 L424 382 Q320 374 216 382 Z" fill="#1c1f26"/>
+          <path d="M24 34 Q320 6 616 34 L616 320 Q320 296 24 320 Z" fill="#0b0c10" stroke="#2f343f"/>
+          <path d="M36 46 Q320 20 604 46 L604 296 Q320 274 36 296 Z" fill="url(#glass)"/>
+          <path d="M36 46 Q320 20 604 46 L604 140 Q320 120 36 140 Z" fill="url(#sheen)"/>
+          <g id="front-zones"></g>
+        </svg>
+        <svg viewBox="0 0 300 190" id="back" role="group" aria-label="Retro del monitor">
+          <defs><filter id="bloom-b" filterUnits="userSpaceOnUse" x="-60" y="-60" width="420" height="310"><feGaussianBlur stdDeviation="6"/></filter></defs>
+          <path d="M8 18 Q150 2 292 18 L292 168 Q150 154 8 168 Z" fill="#1b1e25" stroke="#2f343f"/>
+          <path d="M96 40 Q150 32 204 40 L204 140 Q150 134 96 140 Z" fill="#15171c"/>
+          <circle cx="150" cy="88" r="20" fill="#101217" stroke="#2a2f3a"/>
+          <g id="back-zones"></g>
+        </svg>
+      </div>
+      <div class="zones" id="zones" role="group" aria-label="Zone"></div>
+    </div>
+
+    <section class="scenes hidden" id="scenes">
+      <h3>Scene rapide (tutte le zone)</h3>
+      <div class="scene-row" id="presets"></div>
+    </section>
+
+    <div class="info hidden" id="info"></div>
+  </section>
+
+  <aside class="inspector hidden" id="inspector">
+    <div class="insp-head">
+      <small>Zona selezionata</small>
+      <h2 id="sel-title">Tutte le zone</h2>
+      <p id="sel-sub"></p>
+    </div>
+    <div class="insp-body">
+      <div class="section">
+        <header><h4>Effetto</h4></header>
+        <div class="effects" id="effects"></div>
+      </div>
+
+      <div class="section" id="leds-group">
+        <header><h4 id="leds-label"></h4></header>
+        <div class="bar" id="bar"></div>
+        <div class="tools">
+          <button id="fill-all">Copia su tutti</button>
+          <button id="fill-gradient">Sfuma dal primo all'ultimo</button>
+        </div>
+        <div class="quick" id="quick-leds" aria-label="Colori rapidi per il LED scelto"></div>
+      </div>
+
+      <div class="section" id="colors-group">
+        <header><h4 id="colors-label">Colore</h4></header>
+        <div class="colors" id="colors"></div>
+        <div class="quick" id="quick" aria-label="Colori rapidi"></div>
+        <p class="note" id="colors-hint"></p>
+      </div>
+
+      <div class="section" id="speed-group">
+        <header><h4><label for="speed">Durata del ciclo</label></h4><output id="speed-val"></output></header>
+        <input type="range" id="speed" min="1" max="100">
+      </div>
+
+      <div class="section">
+        <header><h4><label for="brightness">Luminosità generale</label></h4><output id="brightness-val"></output></header>
+        <input type="range" id="brightness" min="0" max="100">
+      </div>
+    </div>
+    <div class="insp-foot">
+      <span class="sync"><i class="dot" id="sync-dot"></i><span id="saved" aria-live="polite">Sincronizzato</span></span>
+      <button class="btn" id="identify">Individua sul monitor</button>
+    </div>
+  </aside>
+</div>
+
+<script>
+const ICON = {
+  off: '<circle cx="11" cy="6" r="4.5" fill="none" stroke="currentColor"/><path d="M5 11 L17 1" stroke="currentColor"/>',
+  static: '<circle cx="11" cy="6" r="5" fill="currentColor"/>',
+  breathing: '<path d="M1 10 Q6 -4 11 6 T21 2" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  cycle: '<circle cx="6" cy="6" r="4" fill="currentColor" opacity=".45"/><circle cx="16" cy="6" r="4" fill="currentColor"/>',
+  rainbow: '<path d="M2 11 A9 9 0 0 1 20 11" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 11 A5 5 0 0 1 16 11" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".5"/>',
+  blinking: '<circle cx="5" cy="6" r="3" fill="currentColor"/><circle cx="17" cy="6" r="3" fill="currentColor" opacity=".3"/>',
+  flashing: '<path d="M12 1 L6 7 L11 7 L9 11 L16 5 L11 5 Z" fill="currentColor"/>',
+  blinds: '<path d="M2 2 H20 M2 6 H20 M2 10 H20" stroke="currentColor" stroke-width="1.6"/>',
+  meteor: '<circle cx="17" cy="6" r="3" fill="currentColor"/><path d="M1 6 H13" stroke="currentColor" stroke-width="1.6" opacity=".5"/>',
+  random: '<circle cx="4" cy="3" r="2" fill="currentColor"/><circle cx="12" cy="9" r="2" fill="currentColor" opacity=".6"/><circle cx="19" cy="4" r="2" fill="currentColor" opacity=".35"/>',
+  leds: '<rect x="1" y="4" width="4" height="4" rx="1" fill="currentColor"/><rect x="7" y="4" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/><rect x="13" y="4" width="4" height="4" rx="1" fill="currentColor" opacity=".45"/><rect x="19" y="4" width="2" height="4" rx="1" fill="currentColor" opacity=".25"/>',
+};
+const EFFECT_LABEL = {
+  off: "Spento", static: "Fisso", breathing: "Respiro", cycle: "Ciclo", rainbow: "Arcobaleno", blinking: "Lampeggio",
+  flashing: "Flash", blinds: "Tende", meteor: "Meteora", random: "Casuale", leds: "Per LED",
+};
+const EFFECT_COLORS = { off: 0, static: 1, breathing: 1, blinking: 1, flashing: 1, blinds: 1, meteor: 1, cycle: "many", rainbow: 0, random: 0, leds: 0 };
+const TIMED = { steelseries: ["breathing", "cycle", "rainbow"], mystic: [] };
+const BACKEND_LABEL = { steelseries: "Controller SteelSeries (USB 1038:1126)", mystic: "Mystic Light (USB 1462:3fa4)" };
+const MAX_CYCLE = 12;
+const RAINBOW = ["#ff0000", "#ffff00", "#00ff00", "#00ffff", "#0000ff", "#ff00ff"];
+const QUICK = ["#ff1a1a", "#ff6a00", "#ffd000", "#3dff6e", "#00e5ff", "#2f5bff", "#9d4dff", "#ff3fb4", "#ffffff"];
+const PRESETS = [
+  { name: "Rosso", effect: "static", colors: ["#ff1a1a"] },
+  { name: "Bianco caldo", effect: "static", colors: ["#ffd9a8"] },
+  { name: "Ghiaccio", effect: "static", colors: ["#00e5ff"] },
+  { name: "Respiro viola", effect: "breathing", colors: ["#9d4dff"] },
+  { name: "Tramonto", effect: "cycle", colors: ["#ff3d00", "#ff006a", "#7a00ff"] },
+  { name: "Arcobaleno", effect: "rainbow", colors: RAINBOW },
+  { name: "Spento", effect: "off", colors: ["#000000"] },
+];
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+
+let monitors = [];
+let current = null;
+let model = null, state = null, ZONES = {}, IDS = [];
+let selected = new Set();
+let view = "front";
+let tab = "light";
+let sendTimer = null;
+let activeLed = 0;
+let els = {};
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs) => {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+};
+const make = (tag, props = {}, ...children) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...children);
+  return e;
+};
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const rgbHex = (c) => "#" + c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("");
+const mix = (cols) => cols[0].map((_, k) => cols.reduce((s, c) => s + c[k], 0) / cols.length);
+const pad = (cols, n) => Array.from({ length: n }, (_, i) => cols[Math.min(i, cols.length - 1)]);
+const isPerLed = (z) => model.per_led.includes(z);
+const viewsOf = () => [...new Set(model.zones.map((z) => z.view))];
+
+const curveY = (x) => 308 - 11.5 * (1 - Math.pow((x - 320) / 296, 2));
+const BACK_SHAPES = {
+  "bracket-left": () => [[34, 46], [80, 52], [80, 128], [34, 136]],
+  "bracket-right": () => [[266, 46], [220, 52], [220, 128], [266, 136]],
+  ring: () => Array.from({ length: 37 }, (_, i) => [150 + 30 * Math.cos(-Math.PI / 2 + i * Math.PI / 18), 88 + 30 * Math.sin(-Math.PI / 2 + i * Math.PI / 18)]),
+  chevron: () => [[112, 124], [150, 150], [188, 124]],
+};
+
+function backShape(zone, i, n) {
+  if (BACK_SHAPES[zone.shape]) return BACK_SHAPES[zone.shape]();
+  const y = 40 + (110 / (n + 1)) * (i + 1);
+  return [[30, y], [270, y]];
+}
+
+function splitPolyline(pts, n) {
+  const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
+  const total = seg.reduce((a, b) => a + b, 0);
+  const at = (d) => {
+    let i = 0;
+    while (i < seg.length - 1 && d > seg[i]) { d -= seg[i]; i++; }
+    const f = seg[i] ? Math.min(1, d / seg[i]) : 0;
+    return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f];
+  };
+  const gap = n > 1 ? Math.min(3, total / n / 4) : 0;
+  const parts = [];
+  for (let k = 0; k < n; k++) {
+    const a = (total * k) / n + gap / 2, b = (total * (k + 1)) / n - gap / 2;
+    const part = [at(a)];
+    let acc = 0;
+    for (let i = 0; i < seg.length; i++) {
+      acc += seg[i];
+      if (acc > a && acc < b) part.push(pts[i + 1]);
+    }
+    part.push(at(b));
+    parts.push(part);
+  }
+  return parts;
+}
+const pathOf = (pts) => "M" + pts.map((p) => p.map((v) => v.toFixed(1)).join(" ")).join(" L");
+
+function buildZones() {
+  $("front-zones").replaceChildren();
+  $("back-zones").replaceChildren();
+  $("zones").replaceChildren();
+  els = {};
+  const front = model.zones.filter((z) => z.view === "front");
+  const back = model.zones.filter((z) => z.view === "back");
+  const span = 500 / Math.max(front.length, 1);
+  front.forEach((z, i) => {
+    const x0 = 70 + i * span, x1 = x0 + span - 14;
+    const pts = Array.from({ length: 9 }, (_, k) => { const x = x0 + ((x1 - x0) * k) / 8; return [x, curveY(x)]; });
+    addZone(z, pts, "front-zones", "bloom", 14);
+  });
+  back.forEach((z, i) => addZone(z, backShape(z, i, back.length), "back-zones", "bloom-b", 14));
+
+  if (IDS.length > 1) {
+    const all = make("button", { className: "chip all", textContent: "Tutte" });
+    all.dataset.all = "1";
+    all.addEventListener("click", () => { selected = new Set(IDS); render(); });
+    $("zones").appendChild(all);
+  }
+  for (const z of model.zones) {
+    const chip = make("button", { className: "chip", textContent: z.label });
+    chip.prepend(make("i"));
+    chip.dataset.chip = z.id;
+    chip.addEventListener("click", (e) => pickZone(z.id, e));
+    $("zones").appendChild(chip);
+  }
+  const views = viewsOf();
+  $("views").classList.toggle("hidden", views.length < 2);
+  if (!views.includes(view)) view = views[0];
+  showView();
+}
+
+function showView() {
+  $("front").classList.toggle("hidden", view !== "front");
+  $("back").classList.toggle("hidden", view !== "back");
+  document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === view));
+  document.querySelectorAll("[data-chip]").forEach((c) => c.classList.toggle("hidden", viewsOf().length > 1 && ZONES[c.dataset.chip].view !== view));
+}
+
+function pickZone(id, e) {
+  if (e && (e.ctrlKey || e.shiftKey || e.metaKey)) {
+    selected.has(id) && selected.size > 1 ? selected.delete(id) : selected.add(id);
+  } else {
+    selected = new Set([id]);
+  }
+  render();
+}
+
+function addZone(z, pts, parent, bloom, glowWidth) {
+  const g = svgEl("g", { class: "zone", tabindex: 0, role: "button", "aria-label": z.label });
+  g.dataset.zone = z.id;
+  const pieces = splitPolyline(pts, Math.min(z.leds, 24));
+  els[z.id] = { leds: [], n: z.leds };
+  for (const p of pieces) {
+    const d = pathOf(p);
+    const glow = svgEl("path", { d, "stroke-width": glowWidth, "stroke-linecap": "round", "stroke-linejoin": "round", fill: "none", filter: `url(#${bloom})` });
+    const led = svgEl("path", { d, "stroke-width": 4, "stroke-linecap": "round", "stroke-linejoin": "round", fill: "none" });
+    g.append(glow, led);
+    els[z.id].leds.push([glow, led]);
+  }
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const box = { x: Math.min(...xs) - 10, y: Math.min(...ys) - 10, width: Math.max(...xs) - Math.min(...xs) + 20, height: Math.max(...ys) - Math.min(...ys) + 20, rx: 10 };
+  g.append(svgEl("rect", { ...box, class: "ring" }), svgEl("rect", { ...box, class: "hit" }));
+  const t = svgEl("title", {});
+  t.textContent = `${z.label} (${z.leds} LED)`;
+  g.appendChild(t);
+  g.addEventListener("click", (e) => pickZone(z.id, e));
+  g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickZone(z.id, e); } });
+  $(parent).appendChild(g);
+}
+
+function sequence(cfg) {
+  if (cfg.effect === "off") return ["#000000"];
+  if (cfg.effect === "rainbow" || cfg.effect === "random") return RAINBOW;
+  if (cfg.effect === "breathing" || cfg.effect === "blinking" || cfg.effect === "flashing") return [cfg.colors[0], "#000000"];
+  if (cfg.effect === "cycle") return cfg.colors;
+  if (cfg.effect === "leds") return [rgbHex(mix(cfg.colors.map(hexRgb)))];
+  return [cfg.colors[0]];
+}
+
+function colorAt(cfg, t) {
+  const seq = sequence(cfg).map(hexRgb);
+  if (seq.length === 1 || reduceMotion.matches) return seq[0];
+  const period = model.backend === "steelseries" ? cfg.speed * 100 : 2400;
+  const pos = ((t % period) / period) * seq.length;
+  const i = Math.floor(pos), f = pos - i;
+  const a = seq[i], b = seq[(i + 1) % seq.length];
+  return a.map((v, k) => v + (b[k] - v) * f);
+}
+
+function frame(t) {
+  if (state) {
+    const now = {};
+    for (const id of IDS) {
+      const cfg = state.zones[id];
+      now[id] = colorAt(cfg, t);
+      const { leds, n } = els[id];
+      leds.forEach((pair, i) => {
+        const hex = cfg.effect === "leds" ? cfg.colors[Math.min(Math.floor((i * n) / leds.length), cfg.colors.length - 1)] : rgbHex(now[id]);
+        pair.forEach((p) => p.setAttribute("stroke", hex));
+      });
+      const chip = document.querySelector(`[data-chip="${id}"] i`);
+      if (chip) chip.style.setProperty("--c", rgbHex(now[id]));
+    }
+    const visible = IDS.filter((z) => ZONES[z].view === view);
+    const glow = rgbHex(mix((visible.length ? visible : IDS).map((z) => now[z])));
+    const root = document.documentElement.style;
+    root.setProperty("--glow", glow);
+    root.setProperty("--glow-k", (0.2 + 0.8 * state.brightness / 100).toFixed(3));
+    $("desk").setAttribute("fill", rgbHex(mix(IDS.filter((z) => ZONES[z].view === "front").map((z) => now[z]).concat([[0, 0, 0]]))));
+    const thumb = document.querySelector(".device.active .thumb");
+    if (thumb) thumb.style.setProperty("--c", rgbHex(mix(IDS.map((z) => now[z]))));
+  }
+  requestAnimationFrame(frame);
+}
+
+function renderDevices() {
+  const box = $("devices");
+  box.replaceChildren();
+  for (const m of monitors) {
+    const b = make("button", { className: "device" + (current && m.key === current.key ? " active" : "") },
+      make("span", { className: "thumb" }),
+      make("span", {}, make("strong", { textContent: m.model.name.replace(/^MSI\s+/, "") }),
+        make("small", {}, make("i", { className: "dot" + (m.connected ? " on" : "") }), m.connected ? "Collegato" : "Non collegato")));
+    b.addEventListener("click", () => select(m.key));
+    box.appendChild(b);
+  }
+  if (!monitors.length) box.appendChild(make("p", { className: "hint", textContent: "Nessun dispositivo" }));
+}
+
+function select(key) {
+  current = monitors.find((m) => m.key === key);
+  history.replaceState(null, "", "#" + encodeURIComponent(key));
+  model = current.model;
+  state = current.state;
+  ZONES = Object.fromEntries(model.zones.map((z) => [z.id, z]));
+  IDS = model.zones.map((z) => z.id);
+  selected = new Set(IDS);
+  activeLed = 0;
+  buildZones();
+  buildEffects();
+  buildPresets();
+  renderDevices();
+  renderHeader();
+  renderInfo();
+  render();
+  current.connected ? setSync("Sincronizzato", "on") : setSync("In attesa del dispositivo", "warn");
+}
+
+function renderHeader() {
+  $("title").textContent = current ? current.model.name : "Prisma Control";
+  const tag = $("support-tag");
+  tag.classList.toggle("hidden", !current);
+  if (current) {
+    tag.className = "tag" + (current.model.tested ? " ok" : "");
+    tag.textContent = current.model.tested ? "Supporto verificato" : "Supporto sperimentale";
+  }
+  showTab();
+}
+
+function showTab() {
+  const has = !!current;
+  document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  $("tabs").classList.toggle("hidden", !has);
+  $("empty").classList.toggle("hidden", has);
+  $("stage").classList.toggle("hidden", !has || tab !== "light");
+  $("scenes").classList.toggle("hidden", !has || tab !== "light");
+  $("info").classList.toggle("hidden", !has || tab !== "info");
+  $("inspector").classList.toggle("hidden", !has || tab !== "light");
+}
+
+function renderInfo() {
+  if (!current) return;
+  const m = current.model;
+  const leds = m.zones.reduce((s, z) => s + z.leds, 0);
+  const rows = [
+    ["Modello", m.name],
+    ["Illuminazione", BACKEND_LABEL[m.backend] || m.backend],
+    ["Supporto", m.tested ? "Verificato su questo modello" : "Sperimentale: protocollo noto, zone non ancora verificate"],
+    ["Stato", current.connected ? `Collegato (${current.device})` : current.error ? `Errore: ${current.error}` : "Non collegato via USB"],
+    ["Identificativo", current.key],
+    ["Zone", m.zones.map((z) => `${z.label} · ${z.leds} LED`).join("\n")],
+    ["LED totali", String(leds)],
+  ];
+  const dl = make("dl");
+  for (const [k, v] of rows) dl.append(make("dt", { textContent: k }), make("dd", { textContent: v, style: "white-space: pre-line" }));
+  const code = (t) => make("code", { textContent: t });
+  $("info").replaceChildren(
+    make("div", {}, make("h2", { textContent: "Informazioni sul dispositivo" }), dl),
+    make("div", {}, make("h2", { textContent: "Assistenza" }),
+      make("p", { textContent: "Se qualcosa non risponde come previsto:" }),
+      make("ol", {},
+        make("li", {}, "Controlla che il cavo USB‑B sia collegato al monitor e al computer, e che il monitor sia acceso."),
+        make("li", {}, "Verifica cosa viene rilevato: ", code("python3 -m msiled --detect"), " dalla cartella ", code("~/.local/share/monitor-led"), "."),
+        make("li", {}, "Per mappare zone o LED che non rispondono (controller SteelSeries): ", code("python3 diag.py"), ", guardando il monitor."),
+        make("li", {}, "Riavvia il servizio: ", code("systemctl --user restart monitor-led"), "."))),
+  );
+}
+
+function applyStatus(s) {
+  const notes = s.notes || [];
+  $("notes").replaceChildren(...notes.map((n) => make("li", { textContent: n })));
+  $("notes").classList.toggle("hidden", !notes.length);
+  $("svc").replaceChildren(make("i", { className: "dot on" }), "Servizio attivo");
+  const keys = (list) => list.map((m) => m.key).join();
+  const changed = keys(s.monitors) !== keys(monitors);
+  for (const m of s.monitors) {
+    const old = monitors.find((o) => o.key === m.key);
+    if (old) m.state = old.state;
+  }
+  monitors = s.monitors;
+  if (!monitors.length) {
+    current = model = state = null;
+    renderDevices();
+    return renderHeader();
+  }
+  if (changed || !current) {
+    const wanted = current ? current.key : decodeURIComponent(location.hash.slice(1));
+    select((monitors.find((m) => m.key === wanted) || monitors[0]).key);
+  } else {
+    current = monitors.find((m) => m.key === current.key);
+    renderDevices();
+    renderInfo();
+    $("identify").disabled = selected.size !== 1 || !current.connected;
+  }
+}
+
+const primary = () => state.zones[[...selected][0]];
+
+function selectionTitle() {
+  if (selected.size === IDS.length) return IDS.length === 1 ? ZONES[IDS[0]].label : "Tutte le zone";
+  for (const v of ["front", "back"]) {
+    const ids = IDS.filter((z) => ZONES[z].view === v);
+    if (ids.length > 1 && ids.length === selected.size && ids.every((z) => selected.has(z))) return v === "front" ? "Tutto il fronte" : "Tutto il retro";
+  }
+  if (selected.size === 1) return ZONES[[...selected][0]].label;
+  return `${selected.size} zone`;
+}
+
+function buildEffects() {
+  const box = $("effects");
+  box.replaceChildren();
+  for (const id of model.effects) {
+    const b = make("button");
+    b.dataset.effect = id;
+    b.innerHTML = `<svg viewBox="0 0 22 12">${ICON[id] || ICON.static}</svg>`;
+    b.append(EFFECT_LABEL[id] || id);
+    b.addEventListener("click", () => edit((z, zid) => {
+      if (id === "leds" && !isPerLed(zid)) return;
+      z.effect = id;
+      if (id === "cycle" && z.colors.length < 2) z.colors = [z.colors[0], "#2f5bff"];
+      if (id === "leds") z.colors = pad(z.colors, ZONES[zid].leds);
+    }));
+    box.appendChild(b);
+  }
+}
+
+function buildPresets() {
+  const box = $("presets");
+  box.replaceChildren();
+  for (const p of PRESETS.filter((p) => model.effects.includes(p.effect))) {
+    const swatch = make("i");
+    swatch.style.setProperty("--c", p.effect === "off" ? "#0b0c10"
+      : p.effect === "breathing" ? `linear-gradient(90deg, #000, ${p.colors[0]}, #000)`
+      : p.colors.length > 1 ? `linear-gradient(90deg, ${p.colors.join(",")})` : p.colors[0]);
+    const b = make("button", { className: "scene" }, swatch, make("span", { textContent: p.name }));
+    b.addEventListener("click", () => {
+      selected = new Set(IDS);
+      edit((z) => { z.effect = p.effect; z.colors = [...p.colors]; });
+    });
+    box.appendChild(b);
+  }
+}
+
+function renderBar(cfg) {
+  const zid = [...selected][0];
+  const show = cfg.effect === "leds" && isPerLed(zid);
+  $("leds-group").classList.toggle("hidden", !show);
+  if (!show) return;
+  const n = ZONES[zid].leds;
+  const cols = pad(cfg.colors, n);
+  activeLed = Math.min(activeLed, n - 1);
+  $("leds-label").textContent = `Colore dei singoli LED (${n})`;
+  const bar = $("bar");
+  bar.style.setProperty("--cols", Math.min(n, 12));
+  bar.replaceChildren();
+  const mark = (i) => { activeLed = i; bar.querySelectorAll(".swatch").forEach((s, j) => s.classList.toggle("active", j === i)); };
+  cols.forEach((c, i) => {
+    const sw = make("label", { className: "swatch" + (i === activeLed ? " active" : "") });
+    sw.style.setProperty("--c", c);
+    const inp = make("input", { type: "color", value: c });
+    inp.setAttribute("aria-label", `LED ${i + 1}`);
+    inp.addEventListener("focus", () => mark(i));
+    inp.addEventListener("click", () => mark(i));
+    inp.addEventListener("input", () => { sw.style.setProperty("--c", inp.value); setLed(i, inp.value, false); });
+    sw.append(inp, make("span", { textContent: i + 1 }));
+    bar.appendChild(sw);
+  });
+}
+
+function setLed(i, color, rerender = true) {
+  edit((z, zid) => { z.effect = "leds"; z.colors = pad(z.colors, ZONES[zid].leds); z.colors[Math.min(i, ZONES[zid].leds - 1)] = color; }, rerender, isPerLed);
+}
+
+function render() {
+  const cfg = primary();
+  $("sel-title").textContent = selectionTitle();
+  const effects = new Set([...selected].map((z) => state.zones[z].effect));
+  const one = selected.size === 1 ? ZONES[[...selected][0]] : null;
+  $("sel-sub").textContent = effects.size > 1 ? "Effetti diversi: la modifica vale per tutte le zone selezionate."
+    : one ? `${one.leds} LED` : `${selected.size} zone`;
+
+  const allPerLed = [...selected].every(isPerLed);
+  document.querySelectorAll("#effects button").forEach((b) => {
+    const on = effects.size === 1 && b.dataset.effect === cfg.effect;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on);
+    if (b.dataset.effect === "leds") {
+      b.disabled = !allPerLed;
+      b.title = allPerLed ? "Un colore diverso per ogni LED" : "Non disponibile per tutte le zone selezionate";
+    }
+  });
+  document.querySelectorAll("[data-zone]").forEach((g) => {
+    g.classList.toggle("sel", selected.has(g.dataset.zone));
+    g.setAttribute("aria-pressed", selected.has(g.dataset.zone));
+  });
+  document.querySelectorAll("[data-chip]").forEach((c) => c.classList.toggle("sel", selected.has(c.dataset.chip) && selected.size < IDS.length));
+  const all = document.querySelector("[data-all]");
+  if (all) all.classList.toggle("sel", selected.size === IDS.length);
+
+  renderBar(cfg);
+  const kind = EFFECT_COLORS[cfg.effect];
+  const many = kind === "many";
+  $("colors-group").classList.toggle("hidden", !kind);
+  $("speed-group").classList.toggle("hidden", !TIMED[model.backend].includes(cfg.effect));
+  $("colors-label").textContent = many ? "Colori del ciclo" : "Colore";
+  $("colors-hint").textContent = many ? `Da 2 a ${MAX_CYCLE} colori, in sequenza con sfumatura.` : "";
+  $("quick").classList.toggle("hidden", many);
+
+  const cols = many ? cfg.colors.slice(0, MAX_CYCLE) : cfg.colors.slice(0, 1);
+  const box = $("colors");
+  box.replaceChildren();
+  cols.forEach((c, i) => {
+    const sw = make("label", { className: "swatch", title: "Scegli il colore" });
+    sw.style.setProperty("--c", c);
+    const inp = make("input", { type: "color", value: c });
+    inp.setAttribute("aria-label", many ? `Colore ${i + 1}` : "Colore");
+    inp.addEventListener("input", () => {
+      sw.style.setProperty("--c", inp.value);
+      edit((z) => { z.colors = [...cols]; z.colors[i] = inp.value; }, false);
+    });
+    sw.appendChild(inp);
+    if (many && cols.length > 2) {
+      const del = make("button", { className: "del", textContent: "✕" });
+      del.setAttribute("aria-label", `Togli il colore ${i + 1}`);
+      del.addEventListener("click", (e) => { e.preventDefault(); edit((z) => { z.colors = cols.filter((_, j) => j !== i); }); });
+      sw.appendChild(del);
+    }
+    box.appendChild(sw);
+  });
+  if (many && cols.length < MAX_CYCLE) {
+    const add = make("button", { className: "add", textContent: "+" });
+    add.setAttribute("aria-label", "Aggiungi un colore");
+    add.addEventListener("click", () => edit((z) => { z.colors = [...cols, QUICK[cols.length % QUICK.length]]; }));
+    box.appendChild(add);
+  }
+
+  $("speed").value = cfg.speed;
+  $("speed-val").textContent = (cfg.speed / 10).toFixed(1).replace(".", ",") + " s";
+  $("brightness").value = state.brightness;
+  $("brightness-val").textContent = state.brightness + "%";
+  document.documentElement.style.setProperty("--led", cfg.effect === "off" ? "#5d6372" : sequence(cfg)[0]);
+  $("identify").disabled = selected.size !== 1 || !current.connected;
+  $("identify").title = !current.connected ? "Il dispositivo non è collegato via USB"
+    : selected.size === 1 ? "La zona lampeggia di bianco sul monitor" : "Seleziona una sola zona";
+}
+
+function edit(fn, rerender = true, only = () => true) {
+  for (const z of selected) if (only(z)) fn(state.zones[z], z);
+  if (rerender) render();
+  queueSend();
+}
+
+function setSync(text, kind) {
+  $("saved").textContent = text;
+  $("sync-dot").className = "dot" + (kind ? " " + kind : "");
+}
+
+function queueSend() {
+  clearTimeout(sendTimer);
+  setSync("Invio in corso…", "warn");
+  const key = current.key, body = state;
+  sendTimer = setTimeout(async () => {
+    try {
+      const r = await post("/api/state", { key, state: body });
+      const m = r.monitors.find((x) => x.key === key);
+      m && m.connected ? setSync("Sincronizzato", "on") : setSync("Salvato, in attesa del dispositivo", "warn");
+    } catch (e) {
+      setSync("Non salvato: " + e.message, "warn");
+    }
+  }, 200);
+}
+
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+
+async function poll() {
+  try {
+    applyStatus(await (await fetch("/api/status")).json());
+  } catch {
+    $("svc").replaceChildren(make("i", { className: "dot warn" }), "Servizio non raggiungibile");
+  }
+}
+
+function wire() {
+  document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; showTab(); }));
+  document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => {
+    view = b.dataset.view;
+    selected = new Set(IDS.filter((z) => ZONES[z].view === view));
+    showView();
+    render();
+  }));
+  for (const c of QUICK) {
+    const b = make("button");
+    b.style.setProperty("--c", c);
+    b.setAttribute("aria-label", c);
+    b.addEventListener("click", () => edit((z) => { z.colors = [c, ...z.colors.slice(1)]; }));
+    $("quick").appendChild(b);
+    const l = b.cloneNode();
+    l.addEventListener("click", () => setLed(activeLed, c));
+    $("quick-leds").appendChild(l);
+  }
+  $("fill-all").addEventListener("click", () => {
+    const c = pad(primary().colors, ZONES[[...selected][0]].leds)[activeLed];
+    edit((z, zid) => { z.effect = "leds"; z.colors = Array(ZONES[zid].leds).fill(c); }, true, isPerLed);
+  });
+  $("fill-gradient").addEventListener("click", () => {
+    const n0 = ZONES[[...selected][0]].leds;
+    const cols = pad(primary().colors, n0);
+    const a = hexRgb(cols[0]), b = hexRgb(cols[n0 - 1]);
+    edit((z, zid) => {
+      const n = ZONES[zid].leds;
+      z.effect = "leds";
+      z.colors = Array.from({ length: n }, (_, i) => rgbHex(a.map((v, k) => v + (b[k] - v) * i / Math.max(n - 1, 1))));
+    }, true, isPerLed);
+  });
+  $("speed").addEventListener("input", (e) => {
+    edit((z) => { z.speed = +e.target.value; }, false);
+    $("speed-val").textContent = (e.target.value / 10).toFixed(1).replace(".", ",") + " s";
+  });
+  $("brightness").addEventListener("input", (e) => {
+    state.brightness = +e.target.value;
+    $("brightness-val").textContent = state.brightness + "%";
+    queueSend();
+  });
+  $("identify").addEventListener("click", () => {
+    const zone = [...selected][0];
+    post("/api/identify", { key: current.key, zone })
+      .then(() => setSync(`${ZONES[zone].label}: guarda quale parte lampeggia`, "on"))
+      .catch((e) => setSync("Impossibile individuare la zona: " + e.message, "warn"));
+  });
+}
+
+(async function init() {
+  if (new URLSearchParams(location.search).get("tab") === "info") tab = "info";
+  wire();
+  await poll();
+  requestAnimationFrame(frame);
+  setInterval(poll, 3000);
+})();
+</script>
+</body>
+</html>

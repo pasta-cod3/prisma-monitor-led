@@ -105,3 +105,5 @@ stati ricavati per ingegneria inversa: l'uso è a tuo rischio. Il menu del monit
 I protocolli dei controller e la tabella dei modelli derivano da [msigd](https://github.com/couriersud/msigd)
 di couriersud e collaboratori, con licenza GPL‑2.0. Prisma Control è distribuito con licenza
 **GNU General Public License v2.0**, vedi [LICENSE](LICENSE).
+
+Font dell'interfaccia: Instrument Sans, SIL Open Font License (vedi `dashboard/fonts/OFL.txt`).

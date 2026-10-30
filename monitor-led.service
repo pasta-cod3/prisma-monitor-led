@@ -1,0 +1,10 @@
+[Unit]
+Description=LED dei monitor MSI (dashboard su http://127.0.0.1:7878)
+
+[Service]
+ExecStart=/usr/bin/python3 %h/.local/share/monitor-led/ledd.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

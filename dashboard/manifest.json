@@ -1,0 +1,8 @@
+{
+  "name": "Prisma Control",
+  "short_name": "Prisma",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101217",
+  "theme_color": "#101217"
+}

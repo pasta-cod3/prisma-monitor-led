@@ -105,3 +105,4 @@ The controller protocols and the model table are based on [msigd](https://github
 by couriersud and contributors, licensed under GPL‑2.0. Prisma Control is released under the
 **GNU General Public License v2.0**, see [LICENSE](LICENSE).
 
+Interface font: Instrument Sans, SIL Open Font License (see `dashboard/fonts/OFL.txt`).
