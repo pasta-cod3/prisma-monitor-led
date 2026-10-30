@@ -27,7 +27,7 @@ def main():
             for z in m["zones"]:
                 print("    %-4s %-18s %3d LED%s" % (z["id"], z["label"], z["leds"], " (per LED)" if z["id"] in m["per_led"] else ""))
         for n in notes:
-            print("! " + n)
+            print("! " + models.note_text(n))
         if not devices:
             print("Nessun monitor MSI con LED trovato via USB.")
         return

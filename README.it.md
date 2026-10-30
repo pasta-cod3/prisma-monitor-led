@@ -1,12 +1,28 @@
-# Prisma Control
+<div align="center">
+
+# 🔺 Prisma Control
+
+### Illuminazione RGB dei monitor MSI su Linux — dal browser
 
 [English](README.md) · **Italiano**
 
-Comanda l'illuminazione RGB dei monitor MSI su Linux da una dashboard nel browser.
+[![Licenza: GPL v2](https://img.shields.io/badge/Licenza-GPL_v2-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Piattaforma: Linux](https://img.shields.io/badge/Piattaforma-Linux-FCC624?logo=linux&logoColor=black)](#requisiti)
+![Dipendenze: nessuna](https://img.shields.io/badge/Dipendenze-nessuna-success)
+![Stato: beta](https://img.shields.io/badge/Stato-beta-orange)
+[![PR benvenute](https://img.shields.io/badge/PR-benvenute-brightgreen.svg)](#aiutare-a-supportare-altri-modelli)
+
 Prisma riconosce il monitor collegato, ne mostra le zone LED e conserva le impostazioni
 dopo riavvii, spegnimenti del monitor e ricollegamenti del cavo.
 
 ![Dashboard di Prisma Control](docs/screenshot.png)
+
+</div>
+
+## Indice
+
+[Funzioni](#funzioni) · [Monitor supportati](#monitor-supportati) · [Requisiti](#requisiti) · [Installazione](#installazione) · [Riga di comando](#riga-di-comando) · [Come funziona](#come-funziona) · [Lingue](#lingue) · [Problemi noti](#problemi-noti) · [Contribuire](#aiutare-a-supportare-altri-modelli) · [Licenza](#crediti-e-licenza)
 
 ## Funzioni
 
@@ -17,6 +33,7 @@ dopo riavvii, spegnimenti del monitor e ricollegamenti del cavo.
 - **Più monitor** insieme, ognuno con le sue impostazioni
 - **Impostazioni persistenti**: vengono riapplicate all'avvio e ogni volta che il monitor ricompare
   sulla USB, e salvate nella memoria del monitor quando il modello lo consente
+- **15 lingue**, scelte da un menu a tendina (rilevate in automatico dal browser), incluso l'arabo da destra a sinistra
 - **Nessuna dipendenza**: solo la libreria standard di Python 3, funziona anche senza internet
   su `http://127.0.0.1:7878`
 
@@ -82,6 +99,18 @@ Un piccolo servizio Python parla con loro tramite `/dev/hidraw`. Ogni due second
 sono collegati e riconosce il modello, dal controller MSI oppure, in mancanza, dal nome trasmesso via
 HDMI/DisplayPort (EDID). Le impostazioni stanno in `~/.config/monitor-led/state.json`.
 
+## Lingue
+
+La dashboard è tradotta in 15 lingue, scelte dal menu a tendina nella barra laterale. Al primo avvio
+la lingua viene scelta in base al browser e poi ricordata:
+
+English · Italiano · Español · Français · Deutsch · Português · Русский · 中文 · 日本語 · 한국어 ·
+Nederlands · Polski · Türkçe · Українська · العربية (da destra a sinistra).
+
+Le traduzioni sono un punto di partenza: correzioni e nuove lingue sono benvenute. Ogni testo sta sotto
+una breve chiave in [`dashboard/i18n.js`](dashboard/i18n.js); copia il blocco `en`, traduci i valori e
+aggiungi una voce in `LANGS`.
+
 ## Problemi noti
 
 - Sull'MPG27CQ gli effetti animati (respiro, ciclo, arcobaleno) possono fermarsi dopo il salvataggio
@@ -107,3 +136,13 @@ di couriersud e collaboratori, con licenza GPL‑2.0. Prisma Control è distribu
 **GNU General Public License v2.0**, vedi [LICENSE](LICENSE).
 
 Font dell'interfaccia: Instrument Sans, SIL Open Font License (vedi `dashboard/fonts/OFL.txt`).
+
+---
+
+<div align="center">
+
+Se Prisma Control ti è utile, lascia una ⭐ — aiuta altri a trovarlo.
+
+`linux` · `rgb` · `led` · `msi` · `mystic-light` · `steelseries` · `monitor` · `hidraw` · `python` · `openrgb-alternative`
+
+</div>

@@ -199,6 +199,7 @@ controller = Controller()
 
 class Handler(BaseHTTPRequestHandler):
     FILES = {"/": ("index.html", "text/html; charset=utf-8"),
+             "/i18n.js": ("i18n.js", "text/javascript; charset=utf-8"),
              "/manifest.json": ("manifest.json", "application/manifest+json"),
              "/fonts/instrument-sans.woff2": ("fonts/instrument-sans.woff2", "font/woff2")}
 

@@ -17,7 +17,7 @@ rm -rf "$DEST/msiled" "$DEST/mpg27cq.py"
 mkdir -p "$DEST/msiled" "$DEST/dashboard/fonts" ~/.config/systemd/user ~/.local/share/applications
 install -m 644 ledd.py diag.py "$DEST/"
 install -m 644 msiled/*.py "$DEST/msiled/"
-install -m 644 dashboard/index.html dashboard/manifest.json "$DEST/dashboard/"
+install -m 644 dashboard/index.html dashboard/i18n.js dashboard/manifest.json "$DEST/dashboard/"
 install -m 644 dashboard/fonts/instrument-sans.woff2 "$DEST/dashboard/fonts/"
 install -m 644 monitor-led.service ~/.config/systemd/user/
 

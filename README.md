@@ -1,12 +1,28 @@
-# Prisma Control
+<div align="center">
+
+# 🔺 Prisma Control
+
+### RGB lighting for MSI monitors on Linux — in your browser
 
 **English** · [Italiano](README.it.md)
 
-Control the RGB lighting of MSI monitors on Linux from a local web dashboard.
+[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Platform: Linux](https://img.shields.io/badge/Platform-Linux-FCC624?logo=linux&logoColor=black)](#requirements)
+![Dependencies: none](https://img.shields.io/badge/Dependencies-none-success)
+![Status: beta](https://img.shields.io/badge/Status-beta-orange)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#help-support-more-models)
+
 Prisma detects the connected monitor, shows its LED zones and keeps your settings
 across reboots, monitor power cycles and cable reconnections.
 
 ![Prisma Control dashboard](docs/screenshot.png)
+
+</div>
+
+## Contents
+
+[Features](#features) · [Supported monitors](#supported-monitors) · [Requirements](#requirements) · [Installation](#installation) · [Command line](#command-line) · [How it works](#how-it-works) · [Languages](#languages) · [Known issues](#known-issues) · [Contributing](#help-support-more-models) · [License](#credits-and-license)
 
 ## Features
 
@@ -17,6 +33,7 @@ across reboots, monitor power cycles and cable reconnections.
 - **Multiple monitors** at once, each with its own settings
 - **Persistent**: settings are reapplied at boot and whenever the monitor reappears on USB,
   and saved into the monitor's memory where supported
+- **15 languages**, chosen from a dropdown (auto-detected from the browser), including right-to-left Arabic
 - **No dependencies**: pure Python 3 standard library, works offline on `http://127.0.0.1:7878`
 
 ## Supported monitors
@@ -81,11 +98,22 @@ A small Python service talks to them through `/dev/hidraw`. Every two seconds it
 are connected and identifies each model, from the MSI controller or, as a fallback, from the name sent
 over HDMI/DisplayPort (EDID). Settings are stored in `~/.config/monitor-led/state.json`.
 
+## Languages
+
+The dashboard ships in 15 languages, picked from the dropdown in the sidebar. On first launch the
+language is chosen from the browser and remembered afterwards:
+
+English · Italiano · Español · Français · Deutsch · Português · Русский · 中文 · 日本語 · 한국어 ·
+Nederlands · Polski · Türkçe · Українська · العربية (right-to-left).
+
+The translations are a starting point — corrections and new languages are very welcome. Each string
+lives under a short key in [`dashboard/i18n.js`](dashboard/i18n.js); copy the `en` block, translate the
+values and add an entry to `LANGS`.
+
 ## Known issues
 
 - On the MPG27CQ, animated effects (breathing, cycle, rainbow) may stop after being saved into the
   monitor's memory. Static and per-LED colors are not affected. A fix is being investigated.
-- The interface is currently in Italian.
 
 ## Help support more models
 
@@ -106,3 +134,13 @@ by couriersud and contributors, licensed under GPL‑2.0. Prisma Control is rele
 **GNU General Public License v2.0**, see [LICENSE](LICENSE).
 
 Interface font: Instrument Sans, SIL Open Font License (see `dashboard/fonts/OFL.txt`).
+
+---
+
+<div align="center">
+
+If Prisma Control is useful to you, consider leaving a ⭐ — it helps others find it.
+
+`linux` · `rgb` · `led` · `msi` · `mystic-light` · `steelseries` · `monitor` · `hidraw` · `python` · `openrgb-alternative`
+
+</div>

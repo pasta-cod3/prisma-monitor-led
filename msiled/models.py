@@ -1,22 +1,22 @@
 from . import edid, hidraw, mystic, steelseries
 
 FRONT_BARS = [
-    {"id": "G%d" % (i + 1), "label": "Barra frontale %d" % (i + 1), "view": "front", "leds": 8,
-     "range": (i * 8, i * 8 + 7)} for i in range(5)
+    {"id": "G%d" % (i + 1), "label": "Barra frontale %d" % (i + 1), "tkey": "z_front", "tn": i + 1,
+     "view": "front", "leds": 8, "range": (i * 8, i * 8 + 7)} for i in range(5)
 ]
 
 STEEL_LAYOUTS = {
     "MPG27CQ": FRONT_BARS + [
-        {"id": "G7", "label": "Retro sinistra", "view": "back", "shape": "bracket-left", "leds": 40, "range": (0x3F, 0x66)},
-        {"id": "G6", "label": "Retro destra", "view": "back", "shape": "bracket-right", "leds": 23, "range": (0x28, 0x3E)},
+        {"id": "G7", "label": "Retro sinistra", "tkey": "z_back_left", "view": "back", "shape": "bracket-left", "leds": 40, "range": (0x3F, 0x66)},
+        {"id": "G6", "label": "Retro destra", "tkey": "z_back_right", "view": "back", "shape": "bracket-right", "leds": 23, "range": (0x28, 0x3E)},
     ],
-    "generic": [{"id": "ALL", "label": "Tutti i LED", "view": "back", "shape": "bar", "leds": 103, "range": (0x00, 0x66)}],
+    "generic": [{"id": "ALL", "label": "Tutti i LED", "tkey": "z_all", "view": "back", "shape": "bar", "leds": 103, "range": (0x00, 0x66)}],
 }
 
-MYSTIC_ZONES = [{"id": "M1", "label": "Mystic Light", "view": "back", "shape": "ring", "group": 1, "leds": 9}]
+MYSTIC_ZONES = [{"id": "M1", "label": "Mystic Light", "tkey": "z_mystic", "view": "back", "shape": "ring", "group": 1, "leds": 9}]
 OPTIX_ZONES = [
-    {"id": "M0", "label": "Gruppo LED 1", "view": "back", "shape": "bar", "group": 0, "leds": 24},
-    {"id": "M1", "label": "Gruppo LED 2", "view": "back", "shape": "bar", "group": 1, "leds": 24},
+    {"id": "M0", "label": "Gruppo LED 1", "tkey": "z_group", "tn": 1, "view": "back", "shape": "bar", "group": 0, "leds": 24},
+    {"id": "M1", "label": "Gruppo LED 2", "tkey": "z_group", "tn": 2, "view": "back", "shape": "bar", "group": 1, "leds": 24},
 ]
 
 
@@ -39,8 +39,8 @@ MODELS = [
     _model("MAG272QP", [("00O", "V18")], "mystic", MYSTIC_ZONES, variant="mystic"),
     _model("MAG251RX", [("00B", "V18")], "mystic", MYSTIC_ZONES, variant="mystic"),
     _model("MPG273CQR", [("00[", "V51")], "mystic", [
-        {"id": "M0", "label": "Logo", "view": "back", "shape": "ring", "group": 0, "leds": 9},
-        {"id": "M1", "label": "Freccia", "view": "back", "shape": "chevron", "group": 1, "leds": 15},
+        {"id": "M0", "label": "Logo", "tkey": "z_logo", "view": "back", "shape": "ring", "group": 0, "leds": 9},
+        {"id": "M1", "label": "Freccia", "tkey": "z_arrow", "view": "back", "shape": "chevron", "group": 1, "leds": 15},
     ], variant="optix"),
     _model("MAG274R", [("00Z", "V41")], "mystic", OPTIX_ZONES, variant="optix"),
     _model("MAG274QRF-QD", [("00e", "V43"), ("00e", "V48"), ("00e", "V56")], "mystic", OPTIX_ZONES, variant="optix"),
@@ -70,7 +70,7 @@ def by_edid(names, backend):
 
 
 def public(model):
-    keep = ("id", "label", "view", "shape", "leds")
+    keep = ("id", "label", "tkey", "tn", "view", "shape", "leds")
     return {"id": model["id"], "name": model["name"], "backend": model["backend"], "tested": model["tested"],
             "effects": model["effects"], "per_led": model["per_led"],
             "zones": [{k: z[k] for k in keep if k in z} for z in model["zones"]]}
@@ -122,12 +122,10 @@ class Detector:
             if status == "permission":
                 model = by_edid(names, "mystic")
                 if not model:
-                    notes.append("Trovato un monitor MSI su %s ma mancano i permessi per leggerlo: "
-                                 "esegui install.sh per aggiungere la regola udev." % c.dev)
+                    notes.append({"code": "note_permission", "args": [c.dev]})
                     continue
             if not model:
-                notes.append("Monitor MSI non riconosciuto (identificativi %s): apri una segnalazione "
-                             "su GitHub con questo testo." % (ident,))
+                notes.append({"code": "note_unknown", "args": [str(ident)]})
                 continue
             if model["backend"] != "mystic":
                 continue
@@ -135,9 +133,19 @@ class Detector:
             devices.append({"key": key, "model": model, "path": c.dev, "backend": "mystic"})
 
         if not devices and names:
-            notes.append("Collegato via video: %s. Per comandare i LED collega anche il cavo USB "
-                         "(presa USB-B dietro al monitor) al computer." % ", ".join(names))
+            notes.append({"code": "note_video", "args": [", ".join(names)]})
         return devices, notes
+
+
+NOTE_IT = {
+    "note_permission": "Trovato un monitor MSI su %s ma mancano i permessi per leggerlo: esegui install.sh per aggiungere la regola udev.",
+    "note_unknown": "Monitor MSI non riconosciuto (identificativi %s): apri una segnalazione su GitHub con questo testo.",
+    "note_video": "Collegato via video: %s. Per comandare i LED collega anche il cavo USB (presa USB-B dietro al monitor) al computer.",
+}
+
+
+def note_text(note):
+    return NOTE_IT.get(note["code"], note["code"]) % tuple(note["args"])
 
 
 def open_backend(device):

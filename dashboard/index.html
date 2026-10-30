@@ -60,8 +60,12 @@
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; }
   .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
   .dot.warn { background: var(--warn); }
-  .side-foot { margin-top: auto; padding: 0 8px; font-size: 12px; color: var(--faint); display: grid; gap: 4px; }
+  .side-foot { margin-top: auto; padding: 0 8px; font-size: 12px; color: var(--faint); display: grid; gap: 8px; }
   .side-foot .svc { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .lang { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .lang select { flex: 1; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  [dir=rtl] .side { border-right: 0; border-left: 1px solid var(--line); }
+  [dir=rtl] .inspector { border-left: 0; border-right: 1px solid var(--line); }
 
   .main { display: flex; flex-direction: column; min-width: 0; overflow-y: auto; }
   .topbar { display: flex; align-items: center; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--line); }
@@ -192,15 +196,16 @@
         <path d="M16 3 L29 27 H3 Z" fill="none" stroke="url(#pg)" stroke-width="2.4" stroke-linejoin="round"/>
         <path d="M16 11 L22 22 H10 Z" fill="url(#pg)" opacity=".85"/>
       </svg>
-      <b>Prisma Control<span>Illuminazione monitor</span></b>
+      <b>Prisma Control<span data-i18n="brand_sub"></span></b>
     </div>
     <nav>
-      <h3>Dispositivi</h3>
+      <h3 data-i18n="devices"></h3>
       <div class="devices" id="devices"></div>
     </nav>
     <div class="side-foot">
-      <span class="svc" id="svc"><i class="dot"></i>Servizio in avvio…</span>
-      <span>Versione 1.0</span>
+      <span class="svc" id="svc"><i class="dot"></i></span>
+      <label class="lang"><svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 0c3 2 4 6 4 10s-1 8-4 10m0-20c-3 2-4 6-4 10s1 8 4 10M2 12h20" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><select id="lang" aria-label="Language"></select></label>
+      <span>v1.0</span>
     </div>
   </aside>
 
@@ -209,8 +214,8 @@
       <h1 id="title">Prisma Control</h1>
       <span class="tag hidden" id="support-tag"></span>
       <div class="tabs" id="tabs" role="tablist">
-        <button class="active" data-tab="light" role="tab">Illuminazione</button>
-        <button data-tab="info" role="tab">Dispositivo</button>
+        <button class="active" data-tab="light" role="tab" data-i18n="tab_light"></button>
+        <button data-tab="info" role="tab" data-i18n="tab_device"></button>
       </div>
     </div>
     <ul class="notes hidden" id="notes"></ul>
@@ -221,18 +226,18 @@
         <path d="M52 64 L68 64 L72 76 L48 76 Z" fill="#1a1d24"/>
         <path d="M20 58 H100" stroke="#5d6372" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/>
       </svg>
-      <h2>Nessun dispositivo collegato</h2>
-      <p>Collega il cavo USB del monitor al computer: è la presa USB‑B sul retro. I LED si comandano da lì, non dal cavo video.</p>
-      <p>Il dispositivo compare qui da solo appena viene rilevato.</p>
+      <h2 data-i18n="empty_title"></h2>
+      <p data-i18n="empty_p1"></p>
+      <p data-i18n="empty_p2"></p>
     </div>
 
     <div class="stage hidden" id="stage">
       <div class="stage-bar">
         <div class="seg" id="views">
-          <button data-view="front">Fronte</button>
-          <button data-view="back">Retro</button>
+          <button data-view="front" data-i18n="view_front"></button>
+          <button data-view="back" data-i18n="view_back"></button>
         </div>
-        <span class="hint">Clicca una zona per modificarla. Ctrl o Shift per sceglierne più di una.</span>
+        <span class="hint" data-i18n="zone_hint"></span>
       </div>
       <div class="render">
         <svg viewBox="0 0 640 400" id="front" role="group" aria-label="Fronte del monitor">
@@ -266,7 +271,7 @@
     </div>
 
     <section class="scenes hidden" id="scenes">
-      <h3>Scene rapide (tutte le zone)</h3>
+      <h3 data-i18n="scenes"></h3>
       <div class="scene-row" id="presets"></div>
     </section>
 
@@ -275,13 +280,13 @@
 
   <aside class="inspector hidden" id="inspector">
     <div class="insp-head">
-      <small>Zona selezionata</small>
-      <h2 id="sel-title">Tutte le zone</h2>
+      <small data-i18n="insp_zone"></small>
+      <h2 id="sel-title"></h2>
       <p id="sel-sub"></p>
     </div>
     <div class="insp-body">
       <div class="section">
-        <header><h4>Effetto</h4></header>
+        <header><h4 data-i18n="effect"></h4></header>
         <div class="effects" id="effects"></div>
       </div>
 
@@ -289,36 +294,37 @@
         <header><h4 id="leds-label"></h4></header>
         <div class="bar" id="bar"></div>
         <div class="tools">
-          <button id="fill-all">Copia su tutti</button>
-          <button id="fill-gradient">Sfuma dal primo all'ultimo</button>
+          <button id="fill-all" data-i18n="fill_all"></button>
+          <button id="fill-gradient" data-i18n="fill_gradient"></button>
         </div>
         <div class="quick" id="quick-leds" aria-label="Colori rapidi per il LED scelto"></div>
       </div>
 
       <div class="section" id="colors-group">
-        <header><h4 id="colors-label">Colore</h4></header>
+        <header><h4 id="colors-label"></h4></header>
         <div class="colors" id="colors"></div>
         <div class="quick" id="quick" aria-label="Colori rapidi"></div>
         <p class="note" id="colors-hint"></p>
       </div>
 
       <div class="section" id="speed-group">
-        <header><h4><label for="speed">Durata del ciclo</label></h4><output id="speed-val"></output></header>
+        <header><h4><label for="speed" data-i18n="cycle_duration"></label></h4><output id="speed-val"></output></header>
         <input type="range" id="speed" min="1" max="100">
       </div>
 
       <div class="section">
-        <header><h4><label for="brightness">Luminosità generale</label></h4><output id="brightness-val"></output></header>
+        <header><h4><label for="brightness" data-i18n="brightness"></label></h4><output id="brightness-val"></output></header>
         <input type="range" id="brightness" min="0" max="100">
       </div>
     </div>
     <div class="insp-foot">
-      <span class="sync"><i class="dot" id="sync-dot"></i><span id="saved" aria-live="polite">Sincronizzato</span></span>
-      <button class="btn" id="identify">Individua sul monitor</button>
+      <span class="sync"><i class="dot" id="sync-dot"></i><span id="saved" aria-live="polite"></span></span>
+      <button class="btn" id="identify" data-i18n="identify"></button>
     </div>
   </aside>
 </div>
 
+<script src="/i18n.js"></script>
 <script>
 const ICON = {
   off: '<circle cx="11" cy="6" r="4.5" fill="none" stroke="currentColor"/><path d="M5 11 L17 1" stroke="currentColor"/>',
@@ -333,28 +339,71 @@ const ICON = {
   random: '<circle cx="4" cy="3" r="2" fill="currentColor"/><circle cx="12" cy="9" r="2" fill="currentColor" opacity=".6"/><circle cx="19" cy="4" r="2" fill="currentColor" opacity=".35"/>',
   leds: '<rect x="1" y="4" width="4" height="4" rx="1" fill="currentColor"/><rect x="7" y="4" width="4" height="4" rx="1" fill="currentColor" opacity=".7"/><rect x="13" y="4" width="4" height="4" rx="1" fill="currentColor" opacity=".45"/><rect x="19" y="4" width="2" height="4" rx="1" fill="currentColor" opacity=".25"/>',
 };
-const EFFECT_LABEL = {
-  off: "Spento", static: "Fisso", breathing: "Respiro", cycle: "Ciclo", rainbow: "Arcobaleno", blinking: "Lampeggio",
-  flashing: "Flash", blinds: "Tende", meteor: "Meteora", random: "Casuale", leds: "Per LED",
-};
 const EFFECT_COLORS = { off: 0, static: 1, breathing: 1, blinking: 1, flashing: 1, blinds: 1, meteor: 1, cycle: "many", rainbow: 0, random: 0, leds: 0 };
 const TIMED = { steelseries: ["breathing", "cycle", "rainbow"], mystic: [] };
-const BACKEND_LABEL = { steelseries: "Controller SteelSeries (USB 1038:1126)", mystic: "Mystic Light (USB 1462:3fa4)" };
 const MAX_CYCLE = 12;
 const RAINBOW = ["#ff0000", "#ffff00", "#00ff00", "#00ffff", "#0000ff", "#ff00ff"];
 const QUICK = ["#ff1a1a", "#ff6a00", "#ffd000", "#3dff6e", "#00e5ff", "#2f5bff", "#9d4dff", "#ff3fb4", "#ffffff"];
 const PRESETS = [
-  { name: "Rosso", effect: "static", colors: ["#ff1a1a"] },
-  { name: "Bianco caldo", effect: "static", colors: ["#ffd9a8"] },
-  { name: "Ghiaccio", effect: "static", colors: ["#00e5ff"] },
-  { name: "Respiro viola", effect: "breathing", colors: ["#9d4dff"] },
-  { name: "Tramonto", effect: "cycle", colors: ["#ff3d00", "#ff006a", "#7a00ff"] },
-  { name: "Arcobaleno", effect: "rainbow", colors: RAINBOW },
-  { name: "Spento", effect: "off", colors: ["#000000"] },
+  { key: "preset_red", effect: "static", colors: ["#ff1a1a"] },
+  { key: "preset_warm", effect: "static", colors: ["#ffd9a8"] },
+  { key: "preset_ice", effect: "static", colors: ["#00e5ff"] },
+  { key: "preset_breath_purple", effect: "breathing", colors: ["#9d4dff"] },
+  { key: "preset_sunset", effect: "cycle", colors: ["#ff3d00", "#ff006a", "#7a00ff"] },
+  { key: "preset_rainbow", effect: "rainbow", colors: RAINBOW },
+  { key: "preset_off", effect: "off", colors: ["#000000"] },
 ];
+
+let lang = "en";
+const t = (key, ...args) => {
+  const dict = I18N[lang] || I18N.en;
+  let s = dict[key] != null ? dict[key] : (I18N.en[key] != null ? I18N.en[key] : key);
+  if (typeof s !== "string") return String(key);
+  return s.replace(/\{(\d+)\}/g, (_, i) => args[i] != null ? args[i] : "");
+};
+const effectLabel = (id) => t("fx_" + id);
+const zoneLabel = (z) => z.tkey ? t(z.tkey, z.tn != null ? z.tn : "") : z.label;
+const backendLabel = (b) => t(b === "steelseries" ? "backend_steel" : "backend_mystic");
+const dec = (n) => n.toString().replace(".", (I18N[lang] || I18N.en)._dec);
+
+function pickLang() {
+  const saved = localStorage.getItem("prisma-lang");
+  if (saved && I18N[saved]) return saved;
+  const codes = LANGS.map((l) => l.code);
+  for (const nav of navigator.languages || [navigator.language || "en"]) {
+    const c = nav.toLowerCase().split("-")[0];
+    if (codes.includes(c)) return c;
+  }
+  return "en";
+}
+
+function codeFmt(str) {
+  const frag = document.createDocumentFragment();
+  str.split(/`([^`]+)`/).forEach((part, i) => frag.append(i % 2 ? Object.assign(document.createElement("code"), { textContent: part }) : part));
+  return frag;
+}
+
+function applyI18n() {
+  const d = I18N[lang] || I18N.en;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = d._dir;
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  const sel = document.getElementById("lang");
+  if (sel && sel.value !== lang) sel.value = lang;
+  renderNotes();
+  if (current) { buildEffects(); buildPresets(); renderDevices(); renderHeader(); renderInfo(); render(); }
+  else { renderDevices(); renderHeader(); }
+}
+
+function setLang(code) {
+  lang = I18N[code] ? code : "en";
+  localStorage.setItem("prisma-lang", lang);
+  applyI18n();
+}
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
 let monitors = [];
+let serverNotes = [];
 let current = null;
 let model = null, state = null, ZONES = {}, IDS = [];
 let selected = new Set();
@@ -438,13 +487,13 @@ function buildZones() {
   back.forEach((z, i) => addZone(z, backShape(z, i, back.length), "back-zones", "bloom-b", 14));
 
   if (IDS.length > 1) {
-    const all = make("button", { className: "chip all", textContent: "Tutte" });
+    const all = make("button", { className: "chip all", textContent: t("chip_all") });
     all.dataset.all = "1";
     all.addEventListener("click", () => { selected = new Set(IDS); render(); });
     $("zones").appendChild(all);
   }
   for (const z of model.zones) {
-    const chip = make("button", { className: "chip", textContent: z.label });
+    const chip = make("button", { className: "chip", textContent: zoneLabel(z) });
     chip.prepend(make("i"));
     chip.dataset.chip = z.id;
     chip.addEventListener("click", (e) => pickZone(z.id, e));
@@ -473,7 +522,7 @@ function pickZone(id, e) {
 }
 
 function addZone(z, pts, parent, bloom, glowWidth) {
-  const g = svgEl("g", { class: "zone", tabindex: 0, role: "button", "aria-label": z.label });
+  const g = svgEl("g", { class: "zone", tabindex: 0, role: "button", "aria-label": zoneLabel(z) });
   g.dataset.zone = z.id;
   const pieces = splitPolyline(pts, Math.min(z.leds, 24));
   els[z.id] = { leds: [], n: z.leds };
@@ -487,9 +536,9 @@ function addZone(z, pts, parent, bloom, glowWidth) {
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
   const box = { x: Math.min(...xs) - 10, y: Math.min(...ys) - 10, width: Math.max(...xs) - Math.min(...xs) + 20, height: Math.max(...ys) - Math.min(...ys) + 20, rx: 10 };
   g.append(svgEl("rect", { ...box, class: "ring" }), svgEl("rect", { ...box, class: "hit" }));
-  const t = svgEl("title", {});
-  t.textContent = `${z.label} (${z.leds} LED)`;
-  g.appendChild(t);
+  const t2 = svgEl("title", {});
+  t2.textContent = `${zoneLabel(z)} · ${t("n_leds", z.leds)}`;
+  g.appendChild(t2);
   g.addEventListener("click", (e) => pickZone(z.id, e));
   g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickZone(z.id, e); } });
   $(parent).appendChild(g);
@@ -547,11 +596,11 @@ function renderDevices() {
     const b = make("button", { className: "device" + (current && m.key === current.key ? " active" : "") },
       make("span", { className: "thumb" }),
       make("span", {}, make("strong", { textContent: m.model.name.replace(/^MSI\s+/, "") }),
-        make("small", {}, make("i", { className: "dot" + (m.connected ? " on" : "") }), m.connected ? "Collegato" : "Non collegato")));
+        make("small", {}, make("i", { className: "dot" + (m.connected ? " on" : "") }), t(m.connected ? "connected" : "not_connected"))));
     b.addEventListener("click", () => select(m.key));
     box.appendChild(b);
   }
-  if (!monitors.length) box.appendChild(make("p", { className: "hint", textContent: "Nessun dispositivo" }));
+  if (!monitors.length) box.appendChild(make("p", { className: "hint", textContent: t("no_devices") }));
 }
 
 function select(key) {
@@ -570,7 +619,7 @@ function select(key) {
   renderHeader();
   renderInfo();
   render();
-  current.connected ? setSync("Sincronizzato", "on") : setSync("In attesa del dispositivo", "warn");
+  current.connected ? setSync(t("synced"), "on") : setSync(t("waiting_device"), "warn");
 }
 
 function renderHeader() {
@@ -579,7 +628,7 @@ function renderHeader() {
   tag.classList.toggle("hidden", !current);
   if (current) {
     tag.className = "tag" + (current.model.tested ? " ok" : "");
-    tag.textContent = current.model.tested ? "Supporto verificato" : "Supporto sperimentale";
+    tag.textContent = t(current.model.tested ? "support_ok" : "support_exp");
   }
   showTab();
 }
@@ -599,35 +648,40 @@ function renderInfo() {
   if (!current) return;
   const m = current.model;
   const leds = m.zones.reduce((s, z) => s + z.leds, 0);
+  const status = current.connected ? t("status_connected", current.device)
+    : current.error ? t("status_error", current.error) : t("status_offline");
   const rows = [
-    ["Modello", m.name],
-    ["Illuminazione", BACKEND_LABEL[m.backend] || m.backend],
-    ["Supporto", m.tested ? "Verificato su questo modello" : "Sperimentale: protocollo noto, zone non ancora verificate"],
-    ["Stato", current.connected ? `Collegato (${current.device})` : current.error ? `Errore: ${current.error}` : "Non collegato via USB"],
-    ["Identificativo", current.key],
-    ["Zone", m.zones.map((z) => `${z.label} · ${z.leds} LED`).join("\n")],
-    ["LED totali", String(leds)],
+    [t("info_model"), m.name],
+    [t("info_lighting"), backendLabel(m.backend)],
+    [t("info_support"), t(m.tested ? "support_verified_long" : "support_exp_long")],
+    [t("info_status"), status],
+    [t("info_id"), current.key],
+    [t("info_zones"), m.zones.map((z) => `${zoneLabel(z)} · ${t("n_leds", z.leds)}`).join("\n")],
+    [t("info_total"), String(leds)],
   ];
   const dl = make("dl");
   for (const [k, v] of rows) dl.append(make("dt", { textContent: k }), make("dd", { textContent: v, style: "white-space: pre-line" }));
-  const code = (t) => make("code", { textContent: t });
   $("info").replaceChildren(
-    make("div", {}, make("h2", { textContent: "Informazioni sul dispositivo" }), dl),
-    make("div", {}, make("h2", { textContent: "Assistenza" }),
-      make("p", { textContent: "Se qualcosa non risponde come previsto:" }),
+    make("div", {}, make("h2", { textContent: t("info_title") }), dl),
+    make("div", {}, make("h2", { textContent: t("help_title") }),
+      make("p", { textContent: t("help_intro") }),
       make("ol", {},
-        make("li", {}, "Controlla che il cavo USB‑B sia collegato al monitor e al computer, e che il monitor sia acceso."),
-        make("li", {}, "Verifica cosa viene rilevato: ", code("python3 -m msiled --detect"), " dalla cartella ", code("~/.local/share/monitor-led"), "."),
-        make("li", {}, "Per mappare zone o LED che non rispondono (controller SteelSeries): ", code("python3 diag.py"), ", guardando il monitor."),
-        make("li", {}, "Riavvia il servizio: ", code("systemctl --user restart monitor-led"), "."))),
+        make("li", {}, codeFmt(t("help_1"))),
+        make("li", {}, codeFmt(t("help_2"))),
+        make("li", {}, codeFmt(t("help_3"))),
+        make("li", {}, codeFmt(t("help_4"))))),
   );
 }
 
+function renderNotes() {
+  $("notes").replaceChildren(...serverNotes.map((n) => make("li", { textContent: typeof n === "string" ? n : t(n.code, ...(n.args || [])) })));
+  $("notes").classList.toggle("hidden", !serverNotes.length);
+}
+
 function applyStatus(s) {
-  const notes = s.notes || [];
-  $("notes").replaceChildren(...notes.map((n) => make("li", { textContent: n })));
-  $("notes").classList.toggle("hidden", !notes.length);
-  $("svc").replaceChildren(make("i", { className: "dot on" }), "Servizio attivo");
+  serverNotes = s.notes || [];
+  renderNotes();
+  $("svc").replaceChildren(make("i", { className: "dot on" }), t("svc_active"));
   const keys = (list) => list.map((m) => m.key).join();
   const changed = keys(s.monitors) !== keys(monitors);
   for (const m of s.monitors) {
@@ -654,13 +708,13 @@ function applyStatus(s) {
 const primary = () => state.zones[[...selected][0]];
 
 function selectionTitle() {
-  if (selected.size === IDS.length) return IDS.length === 1 ? ZONES[IDS[0]].label : "Tutte le zone";
+  if (selected.size === IDS.length) return IDS.length === 1 ? zoneLabel(ZONES[IDS[0]]) : t("all_zones");
   for (const v of ["front", "back"]) {
     const ids = IDS.filter((z) => ZONES[z].view === v);
-    if (ids.length > 1 && ids.length === selected.size && ids.every((z) => selected.has(z))) return v === "front" ? "Tutto il fronte" : "Tutto il retro";
+    if (ids.length > 1 && ids.length === selected.size && ids.every((z) => selected.has(z))) return t(v === "front" ? "sel_front" : "sel_back");
   }
-  if (selected.size === 1) return ZONES[[...selected][0]].label;
-  return `${selected.size} zone`;
+  if (selected.size === 1) return zoneLabel(ZONES[[...selected][0]]);
+  return t("n_zones", selected.size);
 }
 
 function buildEffects() {
@@ -670,7 +724,7 @@ function buildEffects() {
     const b = make("button");
     b.dataset.effect = id;
     b.innerHTML = `<svg viewBox="0 0 22 12">${ICON[id] || ICON.static}</svg>`;
-    b.append(EFFECT_LABEL[id] || id);
+    b.append(effectLabel(id));
     b.addEventListener("click", () => edit((z, zid) => {
       if (id === "leds" && !isPerLed(zid)) return;
       z.effect = id;
@@ -689,7 +743,7 @@ function buildPresets() {
     swatch.style.setProperty("--c", p.effect === "off" ? "#0b0c10"
       : p.effect === "breathing" ? `linear-gradient(90deg, #000, ${p.colors[0]}, #000)`
       : p.colors.length > 1 ? `linear-gradient(90deg, ${p.colors.join(",")})` : p.colors[0]);
-    const b = make("button", { className: "scene" }, swatch, make("span", { textContent: p.name }));
+    const b = make("button", { className: "scene" }, swatch, make("span", { textContent: t(p.key) }));
     b.addEventListener("click", () => {
       selected = new Set(IDS);
       edit((z) => { z.effect = p.effect; z.colors = [...p.colors]; });
@@ -706,7 +760,7 @@ function renderBar(cfg) {
   const n = ZONES[zid].leds;
   const cols = pad(cfg.colors, n);
   activeLed = Math.min(activeLed, n - 1);
-  $("leds-label").textContent = `Colore dei singoli LED (${n})`;
+  $("leds-label").textContent = t("leds_label", n);
   const bar = $("bar");
   bar.style.setProperty("--cols", Math.min(n, 12));
   bar.replaceChildren();
@@ -733,8 +787,8 @@ function render() {
   $("sel-title").textContent = selectionTitle();
   const effects = new Set([...selected].map((z) => state.zones[z].effect));
   const one = selected.size === 1 ? ZONES[[...selected][0]] : null;
-  $("sel-sub").textContent = effects.size > 1 ? "Effetti diversi: la modifica vale per tutte le zone selezionate."
-    : one ? `${one.leds} LED` : `${selected.size} zone`;
+  $("sel-sub").textContent = effects.size > 1 ? t("diff_effects")
+    : one ? t("n_leds", one.leds) : t("n_zones", selected.size);
 
   const allPerLed = [...selected].every(isPerLed);
   document.querySelectorAll("#effects button").forEach((b) => {
@@ -743,7 +797,7 @@ function render() {
     b.setAttribute("aria-pressed", on);
     if (b.dataset.effect === "leds") {
       b.disabled = !allPerLed;
-      b.title = allPerLed ? "Un colore diverso per ogni LED" : "Non disponibile per tutte le zone selezionate";
+      b.title = allPerLed ? t("per_led_on") : t("per_led_off");
     }
   });
   document.querySelectorAll("[data-zone]").forEach((g) => {
@@ -759,15 +813,15 @@ function render() {
   const many = kind === "many";
   $("colors-group").classList.toggle("hidden", !kind);
   $("speed-group").classList.toggle("hidden", !TIMED[model.backend].includes(cfg.effect));
-  $("colors-label").textContent = many ? "Colori del ciclo" : "Colore";
-  $("colors-hint").textContent = many ? `Da 2 a ${MAX_CYCLE} colori, in sequenza con sfumatura.` : "";
+  $("colors-label").textContent = t(many ? "colors_cycle" : "color");
+  $("colors-hint").textContent = many ? t("cycle_hint", MAX_CYCLE) : "";
   $("quick").classList.toggle("hidden", many);
 
   const cols = many ? cfg.colors.slice(0, MAX_CYCLE) : cfg.colors.slice(0, 1);
   const box = $("colors");
   box.replaceChildren();
   cols.forEach((c, i) => {
-    const sw = make("label", { className: "swatch", title: "Scegli il colore" });
+    const sw = make("label", { className: "swatch", title: t("color") });
     sw.style.setProperty("--c", c);
     const inp = make("input", { type: "color", value: c });
     inp.setAttribute("aria-label", many ? `Colore ${i + 1}` : "Colore");
@@ -792,13 +846,13 @@ function render() {
   }
 
   $("speed").value = cfg.speed;
-  $("speed-val").textContent = (cfg.speed / 10).toFixed(1).replace(".", ",") + " s";
+  $("speed-val").textContent = dec((cfg.speed / 10).toFixed(1)) + " s";
   $("brightness").value = state.brightness;
   $("brightness-val").textContent = state.brightness + "%";
   document.documentElement.style.setProperty("--led", cfg.effect === "off" ? "#5d6372" : sequence(cfg)[0]);
   $("identify").disabled = selected.size !== 1 || !current.connected;
-  $("identify").title = !current.connected ? "Il dispositivo non è collegato via USB"
-    : selected.size === 1 ? "La zona lampeggia di bianco sul monitor" : "Seleziona una sola zona";
+  $("identify").title = !current.connected ? t("identify_tip_offline")
+    : selected.size === 1 ? t("identify_tip_one") : t("identify_tip_multi");
 }
 
 function edit(fn, rerender = true, only = () => true) {
@@ -814,15 +868,15 @@ function setSync(text, kind) {
 
 function queueSend() {
   clearTimeout(sendTimer);
-  setSync("Invio in corso…", "warn");
+  setSync(t("sending"), "warn");
   const key = current.key, body = state;
   sendTimer = setTimeout(async () => {
     try {
       const r = await post("/api/state", { key, state: body });
       const m = r.monitors.find((x) => x.key === key);
-      m && m.connected ? setSync("Sincronizzato", "on") : setSync("Salvato, in attesa del dispositivo", "warn");
+      m && m.connected ? setSync(t("synced"), "on") : setSync(t("saved_wait"), "warn");
     } catch (e) {
-      setSync("Non salvato: " + e.message, "warn");
+      setSync(t("not_saved", e.message), "warn");
     }
   }, 200);
 }
@@ -838,11 +892,15 @@ async function poll() {
   try {
     applyStatus(await (await fetch("/api/status")).json());
   } catch {
-    $("svc").replaceChildren(make("i", { className: "dot warn" }), "Servizio non raggiungibile");
+    $("svc").replaceChildren(make("i", { className: "dot warn" }), t("svc_unreachable"));
   }
 }
 
 function wire() {
+  const sel = $("lang");
+  for (const l of LANGS) sel.appendChild(make("option", { value: l.code, textContent: l.name }));
+  sel.value = lang;
+  sel.addEventListener("change", () => setLang(sel.value));
   document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; showTab(); }));
   document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => {
     view = b.dataset.view;
@@ -876,7 +934,7 @@ function wire() {
   });
   $("speed").addEventListener("input", (e) => {
     edit((z) => { z.speed = +e.target.value; }, false);
-    $("speed-val").textContent = (e.target.value / 10).toFixed(1).replace(".", ",") + " s";
+    $("speed-val").textContent = dec((e.target.value / 10).toFixed(1)) + " s";
   });
   $("brightness").addEventListener("input", (e) => {
     state.brightness = +e.target.value;
@@ -886,14 +944,17 @@ function wire() {
   $("identify").addEventListener("click", () => {
     const zone = [...selected][0];
     post("/api/identify", { key: current.key, zone })
-      .then(() => setSync(`${ZONES[zone].label}: guarda quale parte lampeggia`, "on"))
-      .catch((e) => setSync("Impossibile individuare la zona: " + e.message, "warn"));
+      .then(() => setSync(t("identify_done", zoneLabel(ZONES[zone])), "on"))
+      .catch((e) => setSync(t("identify_fail", e.message), "warn"));
   });
 }
 
 (async function init() {
   if (new URLSearchParams(location.search).get("tab") === "info") tab = "info";
+  lang = pickLang();
   wire();
+  applyI18n();
+  $("svc").replaceChildren(make("i", { className: "dot" }), t("svc_starting"));
   await poll();
   requestAnimationFrame(frame);
   setInterval(poll, 3000);
